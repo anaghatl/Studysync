@@ -1,0 +1,2848 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StudySync | Study Accountability</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f4f6fc;
+        color: #192238;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 5%;
+        background: white;
+        border-bottom: 1px solid #e4e8f1;
+      }
+
+      .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: #604cf5;
+      }
+
+      .tagline {
+        margin-top: 5px;
+        font-size: 12px;
+        color: #778198;
+      }
+
+      main {
+        max-width: 1200px;
+        margin: 50px auto;
+        padding: 20px;
+      }
+
+      .hero {
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+      }
+
+      .hero h1 {
+        font-size: 38px;
+        margin-bottom: 12px;
+      }
+
+      .hero p {
+        color: #718096;
+        line-height: 1.6;
+      }
+
+      .section-title {
+        margin: 35px 0 18px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+      }
+
+      .card {
+        min-width: 0;
+        background: white;
+        padding: 24px;
+        border: 1px solid #e4e8f1;
+        border-radius: 16px;
+      }
+
+      .card h3 {
+        margin-top: 0;
+      }
+
+      .placeholder {
+        color: #778198;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .daily-work-form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: end;
+        gap: 10px;
+      }
+
+      .daily-work-form label {
+        display: grid;
+        gap: 5px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .daily-work-form input,
+      .daily-work-form select,
+      .daily-work-form textarea {
+        width: 100%;
+        min-width: 0;
+        padding: 9px 10px;
+        border: 1px solid #d8deeb;
+        border-radius: 8px;
+        color: inherit;
+        font: inherit;
+      }
+
+      .daily-work-form textarea {
+        min-height: 58px;
+        resize: vertical;
+      }
+
+      .daily-work-type-fields {
+        display: contents;
+      }
+
+      .daily-work-type-fields[hidden] {
+        display: none;
+      }
+
+      .daily-work-form button,
+      .daily-work-status-button {
+        justify-self: start;
+        padding: 9px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: #604cf5;
+        color: white;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .daily-work-message {
+        margin: 10px 0 0;
+        color: #a12b2b;
+        font-size: 13px;
+      }
+
+      .daily-work-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .daily-work-entry {
+        padding: 12px;
+        border: 1px solid #e4e8f1;
+        border-radius: 10px;
+        overflow-wrap: anywhere;
+      }
+
+      .daily-work-entry h4 {
+        margin: 0 0 5px;
+        font-size: 15px;
+      }
+
+      .daily-work-entry p {
+        margin: 3px 0;
+        color: #718096;
+        font-size: 13px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+      }
+
+      .daily-work-entry.is-complete h4 {
+        color: #718096;
+        text-decoration: line-through;
+      }
+
+      .daily-work-entry-actions {
+        margin-top: 8px;
+      }
+
+      .daily-work-status-button {
+        padding: 6px 9px;
+        background: #eef0ff;
+        color: #4937d0;
+        font-size: 12px;
+      }
+
+      .daily-work-empty {
+        margin: 0;
+        color: #778198;
+        font-size: 13px;
+      }
+
+      .weekly-goal-form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: end;
+        gap: 10px;
+      }
+
+      .weekly-goal-form label {
+        display: grid;
+        gap: 5px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .weekly-goal-form input,
+      .weekly-goal-form select,
+      .weekly-goal-form textarea {
+        width: 100%;
+        min-width: 0;
+        padding: 9px 10px;
+        border: 1px solid #d8deeb;
+        border-radius: 8px;
+        color: inherit;
+        font: inherit;
+      }
+
+      .weekly-goal-form textarea {
+        min-height: 54px;
+        resize: vertical;
+      }
+
+      .weekly-goal-form button,
+      .weekly-goal-status-button {
+        justify-self: start;
+        padding: 8px 11px;
+        border: 0;
+        border-radius: 8px;
+        background: #604cf5;
+        color: white;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .weekly-goal-message {
+        margin: 9px 0 0;
+        color: #a12b2b;
+        font-size: 13px;
+      }
+
+      .weekly-goal-users {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .weekly-goal-user {
+        min-width: 0;
+        padding: 10px;
+        border: 1px solid #e4e8f1;
+        border-radius: 10px;
+      }
+
+      .weekly-goal-user h4 {
+        margin: 0 0 4px;
+        font-size: 15px;
+      }
+
+      .weekly-goal-count,
+      .weekly-goal-empty {
+        margin: 0;
+        color: #778198;
+        font-size: 13px;
+      }
+
+      .weekly-goal-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .weekly-goal-entry {
+        padding-top: 8px;
+        border-top: 1px solid #edf0f6;
+        overflow-wrap: anywhere;
+      }
+
+      .weekly-goal-entry h5 {
+        margin: 0 0 4px;
+        font-size: 14px;
+      }
+
+      .weekly-goal-entry p {
+        margin: 3px 0;
+        color: #718096;
+        font-size: 13px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+      }
+
+      .weekly-goal-entry.is-complete h5 {
+        color: #718096;
+        text-decoration: line-through;
+      }
+
+      .weekly-goal-status-button {
+        margin-top: 4px;
+        padding: 6px 9px;
+        background: #eef0ff;
+        color: #4937d0;
+        font-size: 12px;
+      }
+
+      .friend-question-form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: end;
+        gap: 10px;
+      }
+
+      .friend-question-creator-controls {
+        display: contents;
+      }
+
+      .friend-question-entries {
+        display: grid;
+        gap: 8px;
+        grid-column: 1 / -1;
+      }
+
+      .friend-question-draft {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        padding: 10px;
+        border: 1px solid #e4e8f1;
+        border-radius: 10px;
+      }
+
+      .friend-question-draft h5 {
+        grid-column: 1 / -1;
+        margin: 0;
+        color: #4937d0;
+        font-size: 13px;
+      }
+
+      .friend-question-form label,
+      .friend-question-draft label {
+        display: grid;
+        gap: 5px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .friend-question-form input,
+      .friend-question-form select,
+      .friend-question-form textarea,
+      .friend-question-draft textarea,
+      .friend-answer-form textarea {
+        width: 100%;
+        min-width: 0;
+        padding: 9px 10px;
+        border: 1px solid #d8deeb;
+        border-radius: 8px;
+        color: inherit;
+        font: inherit;
+      }
+
+      .friend-question-form textarea,
+      .friend-question-draft textarea,
+      .friend-answer-form textarea {
+        min-height: 58px;
+        resize: vertical;
+      }
+
+      .friend-question-form button,
+      .friend-question-create-button,
+      .friend-answer-form button,
+      .friend-question-action {
+        justify-self: start;
+        padding: 8px 11px;
+        border: 0;
+        border-radius: 8px;
+        background: #604cf5;
+        color: white;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .friend-question-message {
+        margin: 9px 0 0;
+        color: #a12b2b;
+        font-size: 13px;
+      }
+
+      .friend-question-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .friend-question-section-title {
+        margin: 18px 0 0;
+        font-size: 16px;
+      }
+
+      .friend-answer-controls {
+        margin-top: 14px;
+      }
+
+      .friend-answer-controls label {
+        display: grid;
+        gap: 5px;
+        max-width: 260px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .friend-answer-controls select {
+        width: 100%;
+        padding: 9px 10px;
+        border: 1px solid #d8deeb;
+        border-radius: 8px;
+        color: inherit;
+        font: inherit;
+      }
+
+      .friend-pending-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .friend-question-entry {
+        min-width: 0;
+        padding: 12px;
+        border: 1px solid #e4e8f1;
+        border-radius: 10px;
+        overflow-wrap: anywhere;
+      }
+
+      .friend-question-entry h4 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+
+      .friend-question-entry p,
+      .friend-answer-form label {
+        margin: 4px 0;
+        color: #718096;
+        font-size: 13px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+      }
+
+      .friend-question-status {
+        font-weight: 600;
+      }
+
+      .friend-answer-form {
+        display: grid;
+        gap: 7px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #edf0f6;
+      }
+
+      .friend-answer-form label {
+        display: grid;
+        gap: 5px;
+        font-weight: 600;
+      }
+
+      .friend-question-action {
+        margin-top: 8px;
+        background: #eef0ff;
+        color: #4937d0;
+        font-size: 12px;
+      }
+
+      .friend-answer-prompt {
+        margin: 8px 0 0;
+        color: #4937d0;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .friend-question-empty {
+        margin: 0;
+        color: #778198;
+        font-size: 13px;
+      }
+
+      .review-card {
+        min-width: 0;
+      }
+
+      .review-card > summary {
+        color: #604cf5;
+        cursor: pointer;
+        list-style-position: inside;
+      }
+
+      .review-card > summary h3 {
+        display: inline;
+        margin: 0;
+      }
+
+      .review-controls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: end;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .review-controls label {
+        display: grid;
+        gap: 5px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .review-controls select,
+      .review-controls button {
+        width: 100%;
+        min-width: 0;
+        padding: 9px 10px;
+        border: 1px solid #d8deeb;
+        border-radius: 8px;
+        color: inherit;
+        font: inherit;
+      }
+
+      .review-controls button {
+        border: 0;
+        background: #604cf5;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .review-feedback-form {
+        display: grid;
+        gap: 9px;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid #e4e8f1;
+      }
+
+      .review-feedback-form[hidden] {
+        display: none;
+      }
+
+      .review-feedback-form label {
+        display: grid;
+        gap: 5px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .review-feedback-form textarea {
+        width: 100%;
+        min-width: 0;
+        min-height: 54px;
+        padding: 9px 10px;
+        border: 1px solid #d8deeb;
+        border-radius: 8px;
+        color: inherit;
+        font: inherit;
+        resize: vertical;
+      }
+
+      .review-feedback-form button {
+        justify-self: start;
+        padding: 9px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: #604cf5;
+        color: white;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .review-feedback-message {
+        margin: 8px 0 0;
+        color: #a12b2b;
+        font-size: 13px;
+      }
+
+      .review-received-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .review-received-item {
+        min-width: 0;
+        padding: 10px;
+        border: 1px solid #e4e8f1;
+        border-radius: 10px;
+        overflow-wrap: anywhere;
+      }
+
+      .review-received-item h5 {
+        margin: 0 0 5px;
+        font-size: 13px;
+      }
+
+      .review-received-item p {
+        margin: 4px 0;
+        color: #718096;
+        font-size: 13px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+      }
+
+      .review-results {
+        margin-top: 16px;
+      }
+
+      .review-results h4 {
+        margin: 16px 0 8px;
+        font-size: 15px;
+      }
+
+      .review-period-label,
+      .review-data-note {
+        color: #718096;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .review-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 8px;
+      }
+
+      .review-summary-item {
+        min-width: 0;
+        padding: 10px;
+        border: 1px solid #e4e8f1;
+        border-radius: 10px;
+        overflow-wrap: anywhere;
+      }
+
+      .review-summary-item h5 {
+        margin: 0 0 5px;
+        font-size: 13px;
+      }
+
+      .review-summary-item p,
+      .review-suggestions li {
+        margin: 3px 0;
+        color: #718096;
+        font-size: 13px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+      }
+
+      .review-suggestions {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .review-empty {
+        color: #778198;
+        font-size: 13px;
+      }
+
+      @media (max-width: 420px) {
+        .weekly-goal-form,
+        .weekly-goal-users,
+        .friend-question-form,
+        .friend-question-draft,
+        .review-controls {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .daily-work-form {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 650px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .hero h1 {
+          font-size: 30px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <div>
+        <div class="logo">StudySync</div>
+        <div class="tagline">STUDY • TRACK • IMPROVE</div>
+      </div>
+
+      <div id="today"></div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Make every study session count.</h1>
+        <p>
+          Set goals, track daily work, record lecture progress, and keep each
+          other accountable.
+        </p>
+      </section>
+
+      <h2 class="section-title">Your Workspace</h2>
+
+      <section class="grid">
+        <div class="card">
+          <h3>Daily Work</h3>
+          <form class="daily-work-form" id="daily-work-form">
+            <label for="work-type">
+              Work type
+              <select id="work-type" name="type" required>
+                <option value="task">Task</option>
+                <option value="lecture">Lecture</option>
+                <option value="problems">Problems Solved</option>
+              </select>
+            </label>
+
+            <label for="work-assignee">
+              Assigned user
+              <select id="work-assignee" name="assignee" required>
+                <option value="User 1">User 1</option>
+                <option value="User 2">User 2</option>
+              </select>
+            </label>
+
+            <div class="daily-work-type-fields" id="task-fields">
+              <label for="work-task-title">
+                Task title
+                <input id="work-task-title" name="title" type="text" />
+              </label>
+              <label for="work-task-description">
+                Description (optional)
+                <textarea id="work-task-description" name="description"></textarea>
+              </label>
+            </div>
+
+            <div class="daily-work-type-fields" id="lecture-fields" hidden>
+              <label for="work-lecture-name">
+                Lecture/video name
+                <input id="work-lecture-name" name="name" type="text" />
+              </label>
+              <label for="work-lecture-duration">
+                Total duration (minutes, optional)
+                <input
+                  id="work-lecture-duration"
+                  name="duration"
+                  type="number"
+                  min="1"
+                  step="1"
+                />
+              </label>
+              <label for="work-lecture-minutes">
+                Minutes completed this session
+                <input
+                  id="work-lecture-minutes"
+                  name="minutes"
+                  type="number"
+                  min="1"
+                  step="1"
+                />
+              </label>
+            </div>
+
+            <div class="daily-work-type-fields" id="problems-fields" hidden>
+              <label for="work-problems-name">
+                Topic/problem-set name
+                <input id="work-problems-name" name="topic" type="text" />
+              </label>
+              <label for="work-problems-count">
+                Number of problems solved
+                <input
+                  id="work-problems-count"
+                  name="problems"
+                  type="number"
+                  min="1"
+                  step="1"
+                />
+              </label>
+            </div>
+
+            <button type="submit">Save Daily Work</button>
+          </form>
+          <p class="daily-work-message" id="daily-work-message" role="status" aria-live="polite"></p>
+          <div class="daily-work-list" id="daily-work-list" aria-live="polite"></div>
+        </div>
+
+        <div class="card">
+          <h3>Weekly Goals</h3>
+          <form class="weekly-goal-form" id="weekly-goal-form">
+            <label for="weekly-goal-user">
+              Assigned user
+              <select id="weekly-goal-user" name="assignee" required>
+                <option value="User 1">User 1</option>
+                <option value="User 2">User 2</option>
+              </select>
+            </label>
+            <label for="weekly-goal-week">
+              Week starting
+              <input id="weekly-goal-week" name="weekStart" type="date" required />
+            </label>
+            <label for="weekly-goal-title">
+              Goal title
+              <input id="weekly-goal-title" name="title" type="text" required />
+            </label>
+            <label for="weekly-goal-description">
+              Description (optional)
+              <textarea id="weekly-goal-description" name="description"></textarea>
+            </label>
+            <button type="submit">Add weekly goal</button>
+          </form>
+          <p
+            class="weekly-goal-message"
+            id="weekly-goal-message"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <div class="weekly-goal-users" id="weekly-goal-users"></div>
+        </div>
+
+        <div class="card">
+          <h3>Monthly Goals</h3>
+          <form class="weekly-goal-form" id="monthly-goal-form">
+            <label for="monthly-goal-user">
+              Assigned user
+              <select id="monthly-goal-user" name="assignee" required>
+                <option value="User 1">User 1</option>
+                <option value="User 2">User 2</option>
+              </select>
+            </label>
+            <label for="monthly-goal-month">
+              Month
+              <input id="monthly-goal-month" name="month" type="month" required />
+            </label>
+            <label for="monthly-goal-title">
+              Goal title
+              <input id="monthly-goal-title" name="title" type="text" required />
+            </label>
+            <label for="monthly-goal-description">
+              Description (optional)
+              <textarea
+                id="monthly-goal-description"
+                name="description"
+              ></textarea>
+            </label>
+            <button type="submit">Add monthly goal</button>
+          </form>
+          <p
+            class="weekly-goal-message"
+            id="monthly-goal-message"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <div class="weekly-goal-users" id="monthly-goal-users"></div>
+        </div>
+
+        <div class="card">
+          <h3>Test Your Friend</h3>
+          <h4 class="friend-question-section-title">Create Questions</h4>
+          <form class="friend-question-form" id="friend-question-form">
+            <div class="friend-question-creator-controls">
+              <label for="friend-question-creator">
+                Created by
+                <select id="friend-question-creator" name="creator" required>
+                  <option value="User 1">User 1</option>
+                  <option value="User 2">User 2</option>
+                </select>
+              </label>
+              <label for="friend-question-assignee">
+                User being tested
+                <select id="friend-question-assignee" name="assignee" required>
+                  <option value="User 2">User 2</option>
+                  <option value="User 1">User 1</option>
+                </select>
+              </label>
+              <label for="friend-question-count">
+                Number of questions
+                <select id="friend-question-count" name="questionCount">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                </select>
+              </label>
+            </div>
+            <div
+              class="friend-question-entries"
+              id="friend-question-fields"
+            ></div>
+            <button class="friend-question-create-button" type="submit">
+              Create Questions
+            </button>
+          </form>
+          <p
+            class="friend-question-message"
+            id="friend-question-create-message"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <h4 class="friend-question-section-title">Saved Questions</h4>
+          <div
+            class="friend-question-list"
+            id="friend-question-list"
+            aria-live="polite"
+          ></div>
+          <h4 class="friend-question-section-title">Answer Questions</h4>
+          <div class="friend-answer-controls">
+            <label for="friend-current-user">
+              Current user
+              <select id="friend-current-user">
+                <option value="User 1">User 1</option>
+                <option value="User 2">User 2</option>
+              </select>
+            </label>
+          </div>
+          <p
+            class="friend-question-message"
+            id="friend-question-answer-message"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <div
+            class="friend-pending-list"
+            id="friend-pending-list"
+            aria-live="polite"
+          ></div>
+        </div>
+
+        <div class="card">
+          <details class="review-card">
+            <summary><h3>Review &amp; Insights (Optional)</h3></summary>
+            <div class="review-controls">
+              <label for="review-user">
+                Reviewer
+                <select id="review-user">
+                  <option value="User 1">User 1</option>
+                  <option value="User 2">User 2</option>
+                </select>
+              </label>
+              <label for="review-period">
+                Review period
+                <select id="review-period">
+                  <option value="daily">Daily Review</option>
+                  <option value="weekly">Weekly Review</option>
+                  <option value="monthly">Monthly Review</option>
+                </select>
+              </label>
+              <button id="generate-review" type="button">Generate Review</button>
+            </div>
+            <div
+              class="review-results"
+              id="review-results"
+              aria-live="polite"
+              hidden
+            ></div>
+            <form
+              class="review-feedback-form"
+              id="review-feedback-form"
+              hidden
+            >
+              <label for="review-went-well">
+                What Went Well
+                <textarea id="review-went-well" name="wentWell"></textarea>
+              </label>
+              <label for="review-improve">
+                Areas to Improve
+                <textarea id="review-improve" name="improve"></textarea>
+              </label>
+              <label for="review-advice">
+                Suggestions or Advice
+                <textarea id="review-advice" name="advice"></textarea>
+              </label>
+              <label for="review-targets">
+                Next Period's Targets
+                <textarea id="review-targets" name="targets"></textarea>
+              </label>
+              <button type="submit">Submit Review</button>
+            </form>
+            <p
+              class="review-feedback-message"
+              id="review-feedback-message"
+              role="status"
+              aria-live="polite"
+            ></p>
+            <h4 class="review-results" id="review-received-heading" hidden>
+              Reviews received
+            </h4>
+            <div
+              class="review-received-list"
+              id="review-received-list"
+              aria-live="polite"
+            ></div>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      document.getElementById("today").textContent =
+        new Date().toLocaleDateString("en-IN", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        });
+
+      const dailyWorkStorageKey = "studysync-daily-work";
+      const legacyTaskStorageKey = "studysync-daily-tasks";
+      const legacyLectureStorageKey = "studysync-lecture-progress";
+      const dailyWorkForm = document.getElementById("daily-work-form");
+      const workTypeSelect = document.getElementById("work-type");
+      const dailyWorkList = document.getElementById("daily-work-list");
+      const dailyWorkMessage = document.getElementById("daily-work-message");
+      const workTypeFields = {
+        task: document.getElementById("task-fields"),
+        lecture: document.getElementById("lecture-fields"),
+        problems: document.getElementById("problems-fields"),
+      };
+      let dailyWorkEntries = [];
+      let dailyWorkStorageAvailable = true;
+
+      function showDailyWorkMessage(message) {
+        dailyWorkMessage.textContent = message;
+      }
+
+      function createDailyWorkId() {
+        return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
+
+      function isValidDailyWorkEntry(entry) {
+        if (
+          !entry ||
+          typeof entry.id !== "string" ||
+          !["task", "lecture", "problems"].includes(entry.type) ||
+          (entry.assignee !== "User 1" && entry.assignee !== "User 2") ||
+          typeof entry.title !== "string" ||
+          typeof entry.description !== "string" ||
+          typeof entry.date !== "string" ||
+          Number.isNaN(Date.parse(entry.date)) ||
+          typeof entry.completed !== "boolean"
+        ) {
+          return false;
+        }
+
+        if (entry.type === "task") {
+          return true;
+        }
+
+        if (entry.type === "lecture") {
+          return (
+            (entry.duration === null ||
+              (Number.isInteger(entry.duration) && entry.duration > 0)) &&
+            Number.isInteger(entry.minutes) &&
+            entry.minutes > 0
+          );
+        }
+
+        return Number.isInteger(entry.problems) && entry.problems > 0;
+      }
+
+      function migrateLegacyEntries() {
+        const migratedEntries = [];
+        const savedTasks = localStorage.getItem(legacyTaskStorageKey);
+        const savedLectures = localStorage.getItem(legacyLectureStorageKey);
+        const migrationDate = new Date().toISOString();
+
+        if (savedTasks !== null) {
+          const oldTasks = JSON.parse(savedTasks);
+          if (
+            !Array.isArray(oldTasks) ||
+            !oldTasks.every(
+              (task) =>
+                task &&
+                typeof task.id === "string" &&
+                typeof task.title === "string" &&
+                (task.assignee === "User 1" || task.assignee === "User 2") &&
+                typeof task.description === "string" &&
+                typeof task.completed === "boolean",
+            )
+          ) {
+            throw new Error("Saved daily tasks have an invalid format.");
+          }
+          migratedEntries.push(
+            ...oldTasks.map((task) => ({
+              id: task.id,
+              type: "task",
+              assignee: task.assignee,
+              title: task.title,
+              description: task.description,
+              duration: null,
+              minutes: null,
+              topic: "",
+              problems: null,
+              date: migrationDate,
+              completed: task.completed,
+            })),
+          );
+        }
+
+        if (savedLectures !== null) {
+          const oldLectures = JSON.parse(savedLectures);
+          if (
+            !Array.isArray(oldLectures) ||
+            !oldLectures.every(
+              (entry) =>
+                entry &&
+                typeof entry.id === "string" &&
+                (entry.assignee === "User 1" || entry.assignee === "User 2") &&
+                typeof entry.name === "string" &&
+                (entry.duration === null ||
+                  (Number.isInteger(entry.duration) && entry.duration > 0)) &&
+                Number.isInteger(entry.minutes) &&
+                entry.minutes > 0 &&
+                typeof entry.date === "string" &&
+                !Number.isNaN(Date.parse(entry.date)),
+            )
+          ) {
+            throw new Error("Saved lecture progress has an invalid format.");
+          }
+          migratedEntries.push(
+            ...oldLectures.map((entry) => ({
+              id: entry.id,
+              type: "lecture",
+              assignee: entry.assignee,
+              title: entry.name,
+              description: "",
+              duration: entry.duration,
+              minutes: entry.minutes,
+              topic: "",
+              problems: null,
+              date: entry.date,
+              completed: false,
+            })),
+          );
+        }
+
+        return migratedEntries;
+      }
+
+      function loadDailyWorkEntries() {
+        try {
+          const savedEntries = localStorage.getItem(dailyWorkStorageKey);
+          if (savedEntries !== null) {
+            const parsedEntries = JSON.parse(savedEntries);
+            if (
+              !Array.isArray(parsedEntries) ||
+              !parsedEntries.every(isValidDailyWorkEntry)
+            ) {
+              throw new Error("Saved daily work has an invalid format.");
+            }
+            return parsedEntries;
+          }
+
+          const migratedEntries = migrateLegacyEntries();
+          if (migratedEntries.length > 0) {
+            localStorage.setItem(
+              dailyWorkStorageKey,
+              JSON.stringify(migratedEntries),
+            );
+          }
+          return migratedEntries;
+        } catch (error) {
+          dailyWorkStorageAvailable = false;
+          showDailyWorkMessage(
+            "Could not load or migrate saved work. Check browser storage; existing records have been left unchanged.",
+          );
+          console.error("Unable to load StudySync daily work:", error);
+          return [];
+        }
+      }
+
+      function saveDailyWorkEntries() {
+        try {
+          localStorage.setItem(
+            dailyWorkStorageKey,
+            JSON.stringify(dailyWorkEntries),
+          );
+          dailyWorkStorageAvailable = true;
+          showDailyWorkMessage("");
+          return true;
+        } catch (error) {
+          showDailyWorkMessage(
+            "Daily work could not be saved. Check that browser storage is available.",
+          );
+          console.error("Unable to save StudySync daily work:", error);
+          return false;
+        }
+      }
+
+      function updateWorkTypeFields() {
+        const selectedType = workTypeSelect.value;
+        Object.entries(workTypeFields).forEach(([type, fields]) => {
+          const isVisible = type === selectedType;
+          fields.hidden = !isVisible;
+          fields.querySelectorAll("input, textarea").forEach((input) => {
+            input.disabled = !isVisible;
+          });
+        });
+      }
+
+      function appendEntryText(card, text) {
+        const line = document.createElement("p");
+        line.textContent = text;
+        card.append(line);
+      }
+
+      function renderDailyWorkEntries() {
+        dailyWorkList.replaceChildren();
+        if (dailyWorkEntries.length === 0) {
+          const emptyMessage = document.createElement("p");
+          emptyMessage.className = "daily-work-empty";
+          emptyMessage.textContent = "No daily work saved yet.";
+          dailyWorkList.append(emptyMessage);
+          return;
+        }
+
+        [...dailyWorkEntries].reverse().forEach((entry) => {
+          const card = document.createElement("article");
+          card.className = `daily-work-entry${
+            entry.type === "task" && entry.completed ? " is-complete" : ""
+          }`;
+
+          const heading = document.createElement("h4");
+          heading.textContent = `${{
+            task: "Task",
+            lecture: "Lecture",
+            problems: "Problems Solved",
+          }[entry.type]}: ${entry.type === "problems" ? entry.topic : entry.title}`;
+          card.append(heading);
+          appendEntryText(card, `Assigned to ${entry.assignee}`);
+
+          if (entry.type === "task") {
+            if (entry.description) {
+              appendEntryText(card, entry.description);
+            }
+            appendEntryText(
+              card,
+              `Status: ${entry.completed ? "Complete" : "Incomplete"}`,
+            );
+          } else if (entry.type === "lecture") {
+            appendEntryText(card, `Minutes completed: ${entry.minutes}`);
+            if (entry.duration !== null) {
+              appendEntryText(card, `Total duration: ${entry.duration} minutes`);
+            }
+          } else {
+            appendEntryText(card, `Problems solved: ${entry.problems}`);
+          }
+
+          appendEntryText(
+            card,
+            `Date: ${new Date(entry.date).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}`,
+          );
+
+          if (entry.type === "task") {
+            const actions = document.createElement("div");
+            actions.className = "daily-work-entry-actions";
+            const toggleButton = document.createElement("button");
+            toggleButton.className = "daily-work-status-button";
+            toggleButton.type = "button";
+            toggleButton.textContent = entry.completed
+              ? "Mark incomplete"
+              : "Mark complete";
+            toggleButton.setAttribute("aria-pressed", String(entry.completed));
+            toggleButton.addEventListener("click", () => {
+              const previousEntries = dailyWorkEntries;
+              dailyWorkEntries = dailyWorkEntries.map((currentEntry) =>
+                currentEntry.id === entry.id
+                  ? { ...currentEntry, completed: !currentEntry.completed }
+                  : currentEntry,
+              );
+              if (saveDailyWorkEntries()) {
+                renderDailyWorkEntries();
+              } else {
+                dailyWorkEntries = previousEntries;
+              }
+            });
+            actions.append(toggleButton);
+            card.append(actions);
+          }
+
+          dailyWorkList.append(card);
+        });
+      }
+
+      workTypeSelect.addEventListener("change", updateWorkTypeFields);
+      dailyWorkForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const type = workTypeSelect.value;
+        const assignee = document.getElementById("work-assignee").value;
+        const formData = new FormData(dailyWorkForm);
+        const entry = {
+          id: createDailyWorkId(),
+          type,
+          assignee,
+          title: "",
+          description: "",
+          duration: null,
+          minutes: null,
+          topic: "",
+          problems: null,
+          date: new Date().toISOString(),
+          completed: false,
+        };
+
+        if (assignee !== "User 1" && assignee !== "User 2") {
+          showDailyWorkMessage("Please select User 1 or User 2.");
+          return;
+        }
+
+        if (type === "task") {
+          entry.title = formData.get("title").trim();
+          entry.description = formData.get("description").trim();
+          if (!entry.title) {
+            showDailyWorkMessage("Please enter a task title.");
+            return;
+          }
+        } else if (type === "lecture") {
+          entry.title = formData.get("name").trim();
+          const durationInput = formData.get("duration").trim();
+          const minutesInput = formData.get("minutes").trim();
+          entry.duration = durationInput === "" ? null : Number(durationInput);
+          entry.minutes = minutesInput === "" ? null : Number(minutesInput);
+          if (!entry.title || entry.minutes === null) {
+            showDailyWorkMessage(
+              "Please enter a lecture/video name and minutes completed this session.",
+            );
+            return;
+          }
+          if (
+            !Number.isInteger(entry.minutes) ||
+            entry.minutes <= 0 ||
+            (entry.duration !== null &&
+              (!Number.isInteger(entry.duration) || entry.duration <= 0))
+          ) {
+            showDailyWorkMessage(
+              "Minutes must be positive whole numbers. Total duration must also be positive when provided.",
+            );
+            return;
+          }
+          if (entry.duration !== null && entry.minutes > entry.duration) {
+            showDailyWorkMessage(
+              "Session minutes cannot exceed the total lecture duration.",
+            );
+            return;
+          }
+        } else if (type === "problems") {
+          entry.topic = formData.get("topic").trim();
+          const problemsInput = formData.get("problems").trim();
+          entry.problems = problemsInput === "" ? null : Number(problemsInput);
+          if (!entry.topic || entry.problems === null) {
+            showDailyWorkMessage(
+              "Please enter a topic/problem-set name and the number solved.",
+            );
+            return;
+          }
+          if (!Number.isInteger(entry.problems) || entry.problems <= 0) {
+            showDailyWorkMessage(
+              "The number of problems solved must be a positive whole number.",
+            );
+            return;
+          }
+        } else {
+          showDailyWorkMessage("Please select a valid daily work type.");
+          return;
+        }
+
+        const previousEntries = dailyWorkEntries;
+        dailyWorkEntries = [...dailyWorkEntries, entry];
+        if (saveDailyWorkEntries()) {
+          dailyWorkForm.reset();
+          updateWorkTypeFields();
+          renderDailyWorkEntries();
+        } else {
+          dailyWorkEntries = previousEntries;
+        }
+      });
+
+      dailyWorkEntries = loadDailyWorkEntries();
+      updateWorkTypeFields();
+      renderDailyWorkEntries();
+
+      const weeklyGoalsStorageKey = "studysync-weekly-goals";
+      const weeklyGoalForm = document.getElementById("weekly-goal-form");
+      const weeklyGoalWeekInput = document.getElementById("weekly-goal-week");
+      const weeklyGoalUsers = document.getElementById("weekly-goal-users");
+      const weeklyGoalMessage = document.getElementById("weekly-goal-message");
+      let weeklyGoals = [];
+      let weeklyGoalsStorageAvailable = true;
+
+      function showWeeklyGoalMessage(message) {
+        weeklyGoalMessage.textContent = message;
+      }
+
+      function getCurrentWeekStart() {
+        const date = new Date();
+        const dayOffset = (date.getDay() + 6) % 7;
+        date.setDate(date.getDate() - dayOffset);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function isValidWeeklyGoal(goal) {
+        return Boolean(
+          goal &&
+            typeof goal.id === "string" &&
+            (goal.assignee === "User 1" || goal.assignee === "User 2") &&
+            typeof goal.title === "string" &&
+            typeof goal.description === "string" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(goal.weekStart) &&
+            !Number.isNaN(Date.parse(`${goal.weekStart}T00:00:00`)) &&
+            typeof goal.completed === "boolean",
+        );
+      }
+
+      function loadWeeklyGoals() {
+        try {
+          const savedGoals = localStorage.getItem(weeklyGoalsStorageKey);
+          if (savedGoals === null) {
+            return [];
+          }
+
+          const parsedGoals = JSON.parse(savedGoals);
+          if (
+            !Array.isArray(parsedGoals) ||
+            !parsedGoals.every(isValidWeeklyGoal)
+          ) {
+            throw new Error("Saved weekly goals have an invalid format.");
+          }
+          return parsedGoals;
+        } catch (error) {
+          weeklyGoalsStorageAvailable = false;
+          showWeeklyGoalMessage(
+            "Could not load saved weekly goals. Check browser storage and reload the page.",
+          );
+          console.error("Unable to load StudySync weekly goals:", error);
+          return [];
+        }
+      }
+
+      function saveWeeklyGoals() {
+        try {
+          localStorage.setItem(
+            weeklyGoalsStorageKey,
+            JSON.stringify(weeklyGoals),
+          );
+          weeklyGoalsStorageAvailable = true;
+          showWeeklyGoalMessage("");
+          return true;
+        } catch (error) {
+          showWeeklyGoalMessage(
+            "Weekly goals could not be saved. Check that browser storage is available.",
+          );
+          console.error("Unable to save StudySync weekly goals:", error);
+          return false;
+        }
+      }
+
+      function renderWeeklyGoals() {
+        weeklyGoalUsers.replaceChildren();
+        ["User 1", "User 2"].forEach((assignee) => {
+          const userGoals = weeklyGoals
+            .filter((goal) => goal.assignee === assignee)
+            .sort((first, second) =>
+              second.weekStart.localeCompare(first.weekStart),
+            );
+          const completedCount = userGoals.filter(
+            (goal) => goal.completed,
+          ).length;
+
+          const userSection = document.createElement("section");
+          userSection.className = "weekly-goal-user";
+
+          const heading = document.createElement("h4");
+          heading.textContent = assignee;
+          const count = document.createElement("p");
+          count.className = "weekly-goal-count";
+          count.textContent = `${completedCount} of ${userGoals.length} goals complete`;
+
+          const list = document.createElement("div");
+          list.className = "weekly-goal-list";
+          if (userGoals.length === 0) {
+            const emptyMessage = document.createElement("p");
+            emptyMessage.className = "weekly-goal-empty";
+            emptyMessage.textContent = "No goals added yet.";
+            list.append(emptyMessage);
+          }
+
+          userGoals.forEach((goal) => {
+            const entry = document.createElement("article");
+            entry.className = `weekly-goal-entry${
+              goal.completed ? " is-complete" : ""
+            }`;
+
+            const title = document.createElement("h5");
+            title.textContent = goal.title;
+            const week = document.createElement("p");
+            week.textContent = `Week starting: ${new Date(
+              `${goal.weekStart}T00:00:00`,
+            ).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}`;
+            entry.append(title, week);
+
+            if (goal.description) {
+              const description = document.createElement("p");
+              description.textContent = goal.description;
+              entry.append(description);
+            }
+
+            const status = document.createElement("p");
+            status.textContent = `Status: ${
+              goal.completed ? "Complete" : "Incomplete"
+            }`;
+            entry.append(status);
+
+            const toggleButton = document.createElement("button");
+            toggleButton.className = "weekly-goal-status-button";
+            toggleButton.type = "button";
+            toggleButton.textContent = goal.completed
+              ? "Mark incomplete"
+              : "Mark complete";
+            toggleButton.setAttribute("aria-pressed", String(goal.completed));
+            toggleButton.addEventListener("click", () => {
+              const previousGoals = weeklyGoals;
+              weeklyGoals = weeklyGoals.map((currentGoal) =>
+                currentGoal.id === goal.id
+                  ? { ...currentGoal, completed: !currentGoal.completed }
+                  : currentGoal,
+              );
+
+              if (saveWeeklyGoals()) {
+                renderWeeklyGoals();
+              } else {
+                weeklyGoals = previousGoals;
+              }
+            });
+            entry.append(toggleButton);
+            list.append(entry);
+          });
+
+          userSection.append(heading, count, list);
+          weeklyGoalUsers.append(userSection);
+        });
+      }
+
+      weeklyGoalWeekInput.value = getCurrentWeekStart();
+      weeklyGoals = loadWeeklyGoals();
+      renderWeeklyGoals();
+
+      weeklyGoalForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!weeklyGoalsStorageAvailable) {
+          showWeeklyGoalMessage(
+            "Resolve the browser storage issue before adding or changing weekly goals.",
+          );
+          return;
+        }
+
+        const formData = new FormData(weeklyGoalForm);
+        const assignee = formData.get("assignee");
+        const title = formData.get("title").trim();
+        const description = formData.get("description").trim();
+        const weekStart = formData.get("weekStart");
+
+        if (!title) {
+          showWeeklyGoalMessage("Please enter a goal title.");
+          return;
+        }
+        if (assignee !== "User 1" && assignee !== "User 2") {
+          showWeeklyGoalMessage("Please select User 1 or User 2.");
+          return;
+        }
+        if (
+          typeof weekStart !== "string" ||
+          !/^\d{4}-\d{2}-\d{2}$/.test(weekStart) ||
+          Number.isNaN(Date.parse(`${weekStart}T00:00:00`))
+        ) {
+          showWeeklyGoalMessage("Please select a valid week-start date.");
+          return;
+        }
+
+        const previousGoals = weeklyGoals;
+        weeklyGoals = [
+          ...weeklyGoals,
+          {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            assignee,
+            title,
+            description,
+            weekStart,
+            completed: false,
+          },
+        ];
+
+        if (saveWeeklyGoals()) {
+          weeklyGoalForm.reset();
+          weeklyGoalWeekInput.value = getCurrentWeekStart();
+          renderWeeklyGoals();
+        } else {
+          weeklyGoals = previousGoals;
+        }
+      });
+
+      const monthlyGoalsStorageKey = "studysync-monthly-goals";
+      const monthlyGoalForm = document.getElementById("monthly-goal-form");
+      const monthlyGoalMonthInput = document.getElementById("monthly-goal-month");
+      const monthlyGoalUsers = document.getElementById("monthly-goal-users");
+      const monthlyGoalMessage = document.getElementById("monthly-goal-message");
+      let monthlyGoals = [];
+      let monthlyGoalsStorageAvailable = true;
+
+      function showMonthlyGoalMessage(message) {
+        monthlyGoalMessage.textContent = message;
+      }
+
+      function isValidMonthlyGoal(goal) {
+        return Boolean(
+          goal &&
+            typeof goal.id === "string" &&
+            (goal.assignee === "User 1" || goal.assignee === "User 2") &&
+            /^\d{4}-\d{2}$/.test(goal.month) &&
+            !Number.isNaN(Date.parse(`${goal.month}-01T00:00:00`)) &&
+            typeof goal.title === "string" &&
+            typeof goal.description === "string" &&
+            typeof goal.completed === "boolean",
+        );
+      }
+
+      function loadMonthlyGoals() {
+        try {
+          const savedGoals = localStorage.getItem(monthlyGoalsStorageKey);
+          if (savedGoals === null) {
+            return [];
+          }
+
+          const parsedGoals = JSON.parse(savedGoals);
+          if (
+            !Array.isArray(parsedGoals) ||
+            !parsedGoals.every(isValidMonthlyGoal)
+          ) {
+            throw new Error("Saved monthly goals have an invalid format.");
+          }
+          return parsedGoals;
+        } catch (error) {
+          monthlyGoalsStorageAvailable = false;
+          showMonthlyGoalMessage(
+            "Could not load saved monthly goals. Check browser storage and reload the page.",
+          );
+          console.error("Unable to load StudySync monthly goals:", error);
+          return [];
+        }
+      }
+
+      function saveMonthlyGoals() {
+        try {
+          localStorage.setItem(
+            monthlyGoalsStorageKey,
+            JSON.stringify(monthlyGoals),
+          );
+          monthlyGoalsStorageAvailable = true;
+          showMonthlyGoalMessage("");
+          return true;
+        } catch (error) {
+          showMonthlyGoalMessage(
+            "Monthly goals could not be saved. Check that browser storage is available.",
+          );
+          console.error("Unable to save StudySync monthly goals:", error);
+          return false;
+        }
+      }
+
+      function renderMonthlyGoals() {
+        monthlyGoalUsers.replaceChildren();
+        ["User 1", "User 2"].forEach((assignee) => {
+          const userGoals = monthlyGoals
+            .filter((goal) => goal.assignee === assignee)
+            .sort((first, second) => second.month.localeCompare(first.month));
+          const userSection = document.createElement("section");
+          userSection.className = "weekly-goal-user";
+
+          const heading = document.createElement("h4");
+          heading.textContent = assignee;
+          const list = document.createElement("div");
+          list.className = "weekly-goal-list";
+
+          if (userGoals.length === 0) {
+            const emptyMessage = document.createElement("p");
+            emptyMessage.className = "weekly-goal-empty";
+            emptyMessage.textContent = "No goals added yet.";
+            list.append(emptyMessage);
+          }
+
+          userGoals.forEach((goal) => {
+            const entry = document.createElement("article");
+            entry.className = `weekly-goal-entry${
+              goal.completed ? " is-complete" : ""
+            }`;
+
+            const title = document.createElement("h5");
+            title.textContent = goal.title;
+            const month = document.createElement("p");
+            month.textContent = `Month: ${new Date(
+              `${goal.month}-01T00:00:00`,
+            ).toLocaleDateString("en-IN", {
+              month: "long",
+              year: "numeric",
+            })}`;
+            const status = document.createElement("p");
+            status.textContent = `Status: ${
+              goal.completed ? "Complete" : "Incomplete"
+            }`;
+            entry.append(title, month);
+
+            if (goal.description) {
+              const description = document.createElement("p");
+              description.textContent = goal.description;
+              entry.append(description);
+            }
+            entry.append(status);
+
+            const toggleButton = document.createElement("button");
+            toggleButton.className = "weekly-goal-status-button";
+            toggleButton.type = "button";
+            toggleButton.textContent = goal.completed
+              ? "Mark incomplete"
+              : "Mark complete";
+            toggleButton.setAttribute("aria-pressed", String(goal.completed));
+            toggleButton.addEventListener("click", () => {
+              const previousGoals = monthlyGoals;
+              monthlyGoals = monthlyGoals.map((currentGoal) =>
+                currentGoal.id === goal.id
+                  ? { ...currentGoal, completed: !currentGoal.completed }
+                  : currentGoal,
+              );
+              if (saveMonthlyGoals()) {
+                renderMonthlyGoals();
+              } else {
+                monthlyGoals = previousGoals;
+              }
+            });
+            entry.append(toggleButton);
+            list.append(entry);
+          });
+
+          userSection.append(heading, list);
+          monthlyGoalUsers.append(userSection);
+        });
+      }
+
+      const currentMonth = new Date();
+      monthlyGoalMonthInput.value = `${currentMonth.getFullYear()}-${String(
+        currentMonth.getMonth() + 1,
+      ).padStart(2, "0")}`;
+      monthlyGoals = loadMonthlyGoals();
+      renderMonthlyGoals();
+
+      monthlyGoalForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!monthlyGoalsStorageAvailable) {
+          showMonthlyGoalMessage(
+            "Resolve the browser storage issue before adding or changing monthly goals.",
+          );
+          return;
+        }
+
+        const formData = new FormData(monthlyGoalForm);
+        const assignee = formData.get("assignee");
+        const month = formData.get("month");
+        const title = formData.get("title").trim();
+        const description = formData.get("description").trim();
+
+        if (!title) {
+          showMonthlyGoalMessage("Please enter a goal title.");
+          return;
+        }
+        if (assignee !== "User 1" && assignee !== "User 2") {
+          showMonthlyGoalMessage("Please select User 1 or User 2.");
+          return;
+        }
+        if (
+          typeof month !== "string" ||
+          !/^\d{4}-\d{2}$/.test(month) ||
+          Number.isNaN(Date.parse(`${month}-01T00:00:00`))
+        ) {
+          showMonthlyGoalMessage("Please select a valid month.");
+          return;
+        }
+
+        const previousGoals = monthlyGoals;
+        monthlyGoals = [
+          ...monthlyGoals,
+          {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            assignee,
+            month,
+            title,
+            description,
+            completed: false,
+          },
+        ];
+
+        if (saveMonthlyGoals()) {
+          monthlyGoalForm.reset();
+          monthlyGoalMonthInput.value = `${currentMonth.getFullYear()}-${String(
+            currentMonth.getMonth() + 1,
+          ).padStart(2, "0")}`;
+          renderMonthlyGoals();
+        } else {
+          monthlyGoals = previousGoals;
+        }
+      });
+
+      const friendQuestionsStorageKey = "studysync-friend-questions";
+      const friendQuestionForm = document.getElementById("friend-question-form");
+      const friendQuestionCount = document.getElementById(
+        "friend-question-count",
+      );
+      const friendQuestionFields = document.getElementById(
+        "friend-question-fields",
+      );
+      const friendQuestionList = document.getElementById("friend-question-list");
+      const friendPendingList = document.getElementById(
+        "friend-pending-list",
+      );
+      const friendCurrentUser = document.getElementById("friend-current-user");
+      const friendQuestionCreateMessage = document.getElementById(
+        "friend-question-create-message",
+      );
+      const friendQuestionAnswerMessage = document.getElementById(
+        "friend-question-answer-message",
+      );
+      let friendQuestions = [];
+      let friendQuestionsStorageAvailable = true;
+
+      function showFriendQuestionCreateMessage(message) {
+        friendQuestionCreateMessage.textContent = message;
+      }
+
+      function showFriendQuestionAnswerMessage(message) {
+        friendQuestionAnswerMessage.textContent = message;
+      }
+
+      function isValidFriendQuestion(question) {
+        return Boolean(
+          question &&
+            typeof question.id === "string" &&
+            (question.creator === "User 1" || question.creator === "User 2") &&
+            (question.assignee === "User 1" ||
+              question.assignee === "User 2") &&
+            question.creator !== question.assignee &&
+            typeof question.question === "string" &&
+            typeof question.hints === "string" &&
+            typeof question.expectedAnswer === "string" &&
+            typeof question.answer === "string" &&
+            typeof question.answered === "boolean" &&
+            typeof question.revealed === "boolean" &&
+            typeof question.date === "string" &&
+            !Number.isNaN(Date.parse(question.date)),
+        );
+      }
+
+      function loadFriendQuestions() {
+        try {
+          const savedQuestions = localStorage.getItem(
+            friendQuestionsStorageKey,
+          );
+          if (savedQuestions === null) {
+            return [];
+          }
+
+          const parsedQuestions = JSON.parse(savedQuestions);
+          if (
+            !Array.isArray(parsedQuestions) ||
+            !parsedQuestions.every(isValidFriendQuestion)
+          ) {
+            throw new Error("Saved friend questions have an invalid format.");
+          }
+          return parsedQuestions;
+        } catch (error) {
+          friendQuestionsStorageAvailable = false;
+          showFriendQuestionCreateMessage(
+            "Could not load saved questions. Check browser storage and reload the page.",
+          );
+          showFriendQuestionAnswerMessage(
+            "Could not load saved questions. Check browser storage and reload the page.",
+          );
+          console.error("Unable to load StudySync friend questions:", error);
+          return [];
+        }
+      }
+
+      function saveFriendQuestions() {
+        try {
+          localStorage.setItem(
+            friendQuestionsStorageKey,
+            JSON.stringify(friendQuestions),
+          );
+          friendQuestionsStorageAvailable = true;
+          showFriendQuestionCreateMessage("");
+          showFriendQuestionAnswerMessage("");
+          return true;
+        } catch (error) {
+          showFriendQuestionCreateMessage(
+            "Questions could not be saved. Check that browser storage is available.",
+          );
+          showFriendQuestionAnswerMessage(
+            "Questions could not be saved. Check that browser storage is available.",
+          );
+          console.error("Unable to save StudySync friend questions:", error);
+          return false;
+        }
+      }
+
+      function addQuestionDraftField(container, labelText, name, id) {
+        const label = document.createElement("label");
+        label.htmlFor = id;
+        label.textContent = labelText;
+        const textarea = document.createElement("textarea");
+        textarea.id = id;
+        textarea.name = name;
+        label.append(textarea);
+        container.append(label);
+        return textarea;
+      }
+
+      function renderQuestionDrafts(preservedDrafts = []) {
+        const count = Number(friendQuestionCount.value);
+        friendQuestionFields.replaceChildren();
+
+        for (let index = 0; index < count; index += 1) {
+          const draft = document.createElement("section");
+          draft.className = "friend-question-draft";
+          const heading = document.createElement("h5");
+          heading.textContent = `Question ${index + 1}`;
+          draft.append(heading);
+
+          const question = addQuestionDraftField(
+            draft,
+            "Question",
+            `question-${index}`,
+            `friend-question-text-${index}`,
+          );
+          const hints = addQuestionDraftField(
+            draft,
+            "Hints or notes (optional)",
+            `hints-${index}`,
+            `friend-question-hints-${index}`,
+          );
+          const expectedAnswer = addQuestionDraftField(
+            draft,
+            "Expected answer",
+            `expectedAnswer-${index}`,
+            `friend-question-expected-${index}`,
+          );
+
+          if (preservedDrafts[index]) {
+            question.value = preservedDrafts[index].question;
+            hints.value = preservedDrafts[index].hints;
+            expectedAnswer.value = preservedDrafts[index].expectedAnswer;
+          }
+          friendQuestionFields.append(draft);
+        }
+      }
+
+      function createFriendQuestionCard(question, showAnswer = false) {
+        const entry = document.createElement("article");
+        entry.className = "friend-question-entry";
+
+        const title = document.createElement("h4");
+        title.textContent = question.question;
+        const participants = document.createElement("p");
+        participants.textContent = `Created by ${question.creator} • For ${question.assignee}`;
+        const status = document.createElement("p");
+        status.className = "friend-question-status";
+        status.textContent = `Status: ${
+          question.answered ? "Answered" : "Pending"
+        }`;
+        const date = document.createElement("p");
+        date.textContent = `Created: ${new Date(
+          question.date,
+        ).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })}`;
+        entry.append(title, participants, status, date);
+
+        if (question.hints) {
+          const hints = document.createElement("p");
+          hints.textContent = `Hints/notes: ${question.hints}`;
+          entry.append(hints);
+        }
+
+        if (showAnswer && question.answered) {
+          const submittedAnswer = document.createElement("p");
+          submittedAnswer.textContent = `Answer from ${question.assignee}: ${question.answer}`;
+          entry.append(submittedAnswer);
+
+          if (question.answered && question.revealed) {
+            const expectedAnswer = document.createElement("p");
+            expectedAnswer.textContent = `Expected answer: ${question.expectedAnswer}`;
+            entry.append(expectedAnswer);
+          } else if (question.answered) {
+            const revealButton = document.createElement("button");
+            revealButton.className = "friend-question-action";
+            revealButton.type = "button";
+            revealButton.textContent = "Reveal Expected Answer";
+            revealButton.addEventListener("click", () => {
+              const previousQuestions = friendQuestions;
+              friendQuestions = friendQuestions.map((currentQuestion) =>
+                currentQuestion.id === question.id && currentQuestion.answered
+                  ? { ...currentQuestion, revealed: true }
+                  : currentQuestion,
+              );
+              if (saveFriendQuestions()) {
+                renderFriendQuestions();
+                renderPendingFriendQuestions();
+              } else {
+                friendQuestions = previousQuestions;
+              }
+            });
+            entry.append(revealButton);
+          }
+        }
+
+        return entry;
+      }
+
+      function renderFriendQuestions() {
+        friendQuestionList.replaceChildren();
+        if (friendQuestions.length === 0) {
+          const emptyMessage = document.createElement("p");
+          emptyMessage.className = "friend-question-empty";
+          emptyMessage.textContent = "No questions yet. Create one above.";
+          friendQuestionList.append(emptyMessage);
+          return;
+        }
+
+        [...friendQuestions].reverse().forEach((question) => {
+          friendQuestionList.append(
+            createFriendQuestionCard(question, true),
+          );
+        });
+      }
+
+      function renderPendingFriendQuestions() {
+        friendPendingList.replaceChildren();
+        const currentUser = friendCurrentUser.value;
+        const pendingQuestions = [...friendQuestions]
+          .filter(
+            (question) =>
+              question.assignee === currentUser && !question.answered,
+          )
+          .reverse();
+
+        if (pendingQuestions.length === 0) {
+          const emptyMessage = document.createElement("p");
+          emptyMessage.className = "friend-question-empty";
+          emptyMessage.textContent = `No pending questions assigned to ${currentUser}.`;
+          friendPendingList.append(emptyMessage);
+          return;
+        }
+
+        pendingQuestions.forEach((question) => {
+          const entry = createFriendQuestionCard(question);
+          const answerForm = document.createElement("form");
+          answerForm.className = "friend-answer-form";
+          const answerLabel = document.createElement("label");
+          answerLabel.textContent = `Your answer, ${currentUser}`;
+          const answerInput = document.createElement("textarea");
+          answerInput.name = "answer";
+          answerInput.required = true;
+          answerInput.placeholder = "Type your answer here";
+          answerInput.setAttribute(
+            "aria-label",
+            `Answer for ${currentUser}: ${question.question}`,
+          );
+          const submitAnswer = document.createElement("button");
+          submitAnswer.type = "submit";
+          submitAnswer.textContent = "Submit Answer";
+          answerLabel.append(answerInput);
+          answerForm.append(answerLabel, submitAnswer);
+          answerForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const answer = answerInput.value.trim();
+            if (!answer) {
+              showFriendQuestionAnswerMessage("Please enter an answer.");
+              return;
+            }
+
+            const existingQuestion = friendQuestions.find(
+              (currentQuestion) => currentQuestion.id === question.id,
+            );
+            if (
+              currentUser !== question.assignee ||
+              !existingQuestion ||
+              existingQuestion.assignee !== currentUser ||
+              existingQuestion.answered
+            ) {
+              showFriendQuestionAnswerMessage(
+                "This question is not pending for the selected user.",
+              );
+              return;
+            }
+
+            const previousQuestions = friendQuestions;
+            friendQuestions = friendQuestions.map((currentQuestion) =>
+              currentQuestion.id === question.id
+                ? { ...currentQuestion, answer, answered: true }
+                : currentQuestion,
+            );
+            if (saveFriendQuestions()) {
+              renderFriendQuestions();
+              renderPendingFriendQuestions();
+            } else {
+              friendQuestions = previousQuestions;
+            }
+          });
+          entry.append(answerForm);
+          friendPendingList.append(entry);
+        });
+      }
+
+      function handleFriendUserChange() {
+        showFriendQuestionAnswerMessage("");
+        renderPendingFriendQuestions();
+      }
+
+      friendQuestionCount.addEventListener("change", () => {
+        const drafts = [...friendQuestionFields.querySelectorAll(
+          ".friend-question-draft",
+        )].map((draft) => ({
+          question: draft.querySelector('[name^="question-"]').value,
+          hints: draft.querySelector('[name^="hints-"]').value,
+          expectedAnswer: draft.querySelector(
+            '[name^="expectedAnswer-"]',
+          ).value,
+        }));
+        renderQuestionDrafts(drafts);
+      });
+
+      friendCurrentUser.addEventListener("change", handleFriendUserChange);
+      friendQuestions = loadFriendQuestions();
+      renderQuestionDrafts();
+      renderFriendQuestions();
+      renderPendingFriendQuestions();
+
+      friendQuestionForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!friendQuestionsStorageAvailable) {
+          showFriendQuestionCreateMessage(
+            "Resolve the browser storage issue before creating questions.",
+          );
+          return;
+        }
+
+        const formData = new FormData(friendQuestionForm);
+        const creator = formData.get("creator");
+        const assignee = formData.get("assignee");
+        const count = Number(formData.get("questionCount"));
+
+        if (!Number.isInteger(count) || count < 1 || count > 4) {
+          showFriendQuestionCreateMessage(
+            "Select between 1 and 4 questions.",
+          );
+          return;
+        }
+        if (
+          (creator !== "User 1" && creator !== "User 2") ||
+          (assignee !== "User 1" && assignee !== "User 2")
+        ) {
+          showFriendQuestionCreateMessage("Please select valid users.");
+          return;
+        }
+        if (creator === assignee) {
+          showFriendQuestionCreateMessage(
+            "Choose the other user to answer this question.",
+          );
+          return;
+        }
+
+        const newQuestions = [];
+        for (let index = 0; index < count; index += 1) {
+          const question = formData.get(`question-${index}`).trim();
+          const hints = formData.get(`hints-${index}`).trim();
+          const expectedAnswer = formData
+            .get(`expectedAnswer-${index}`)
+            .trim();
+          if (!question || !expectedAnswer) {
+            showFriendQuestionCreateMessage(
+              `Enter both the question and expected answer for Question ${index + 1}.`,
+            );
+            return;
+          }
+          newQuestions.push({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            creator,
+            assignee,
+            question,
+            hints,
+            expectedAnswer,
+            answer: "",
+            answered: false,
+            revealed: false,
+            date: new Date().toISOString(),
+          });
+        }
+
+        const previousQuestions = friendQuestions;
+        friendQuestions = [...friendQuestions, ...newQuestions];
+
+        if (saveFriendQuestions()) {
+          friendQuestionForm.reset();
+          renderQuestionDrafts();
+          renderFriendQuestions();
+          renderPendingFriendQuestions();
+          showFriendQuestionCreateMessage(
+            `${count} question${count === 1 ? "" : "s"} created for ${assignee}.`,
+          );
+          friendQuestionList.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+        } else {
+          friendQuestions = previousQuestions;
+        }
+      });
+
+      const reviewUser = document.getElementById("review-user");
+      const reviewPeriod = document.getElementById("review-period");
+      const reviewResults = document.getElementById("review-results");
+      const generateReviewButton = document.getElementById("generate-review");
+      const reviewFeedbackForm = document.getElementById(
+        "review-feedback-form",
+      );
+      const reviewFeedbackMessage = document.getElementById(
+        "review-feedback-message",
+      );
+      const reviewReceivedHeading = document.getElementById(
+        "review-received-heading",
+      );
+      const reviewReceivedList = document.getElementById(
+        "review-received-list",
+      );
+      const submittedReviewsStorageKey = "studysync-submitted-reviews";
+      let submittedReviews = [];
+      let submittedReviewsStorageAvailable = true;
+      let currentReviewContext = null;
+
+      function getReviewRecipient(reviewer) {
+        return reviewer === "User 1" ? "User 2" : "User 1";
+      }
+
+      function isValidSubmittedReview(review) {
+        return Boolean(
+          review &&
+            typeof review.id === "string" &&
+            (review.author === "User 1" || review.author === "User 2") &&
+            (review.recipient === "User 1" ||
+              review.recipient === "User 2") &&
+            review.author !== review.recipient &&
+            ["daily", "weekly", "monthly"].includes(review.period) &&
+            typeof review.periodLabel === "string" &&
+            typeof review.periodStart === "string" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(review.periodStart) &&
+            typeof review.periodEnd === "string" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(review.periodEnd) &&
+            ["wentWell", "improve", "advice", "targets"].every(
+              (field) => typeof review.feedback?.[field] === "string",
+            ) &&
+            typeof review.timestamp === "string" &&
+            !Number.isNaN(Date.parse(review.timestamp)),
+        );
+      }
+
+      function loadSubmittedReviews() {
+        try {
+          const savedReviews = localStorage.getItem(
+            submittedReviewsStorageKey,
+          );
+          if (savedReviews === null) {
+            return [];
+          }
+
+          const parsedReviews = JSON.parse(savedReviews);
+          if (
+            !Array.isArray(parsedReviews) ||
+            !parsedReviews.every(isValidSubmittedReview)
+          ) {
+            throw new Error("Saved submitted reviews have an invalid format.");
+          }
+          return parsedReviews;
+        } catch (error) {
+          submittedReviewsStorageAvailable = false;
+          reviewFeedbackMessage.textContent =
+            "Could not load submitted reviews. Check browser storage and reload the page.";
+          console.error("Unable to load StudySync submitted reviews:", error);
+          return [];
+        }
+      }
+
+      function saveSubmittedReviews() {
+        try {
+          localStorage.setItem(
+            submittedReviewsStorageKey,
+            JSON.stringify(submittedReviews),
+          );
+          submittedReviewsStorageAvailable = true;
+          reviewFeedbackMessage.textContent = "";
+          return true;
+        } catch (error) {
+          reviewFeedbackMessage.textContent =
+            "Review could not be saved. Check that browser storage is available.";
+          console.error("Unable to save StudySync submitted reviews:", error);
+          return false;
+        }
+      }
+
+      function getLocalDateString(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function renderReceivedReviews() {
+        const recipient = reviewUser.value;
+        const received = submittedReviews
+          .filter((review) => review.recipient === recipient)
+          .sort(
+            (first, second) =>
+              Date.parse(second.timestamp) - Date.parse(first.timestamp),
+          );
+        reviewReceivedList.replaceChildren();
+        reviewReceivedHeading.hidden = false;
+        reviewReceivedHeading.textContent = `Reviews received by ${recipient}`;
+
+        if (received.length === 0) {
+          const emptyMessage = document.createElement("p");
+          emptyMessage.className = "review-empty";
+          emptyMessage.textContent = "No submitted reviews for this user yet.";
+          reviewReceivedList.append(emptyMessage);
+          return;
+        }
+
+        received.forEach((review) => {
+          const card = document.createElement("article");
+          card.className = "review-received-item";
+          const heading = document.createElement("h5");
+          heading.textContent = `${review.author} • ${review.periodLabel}`;
+          const range = document.createElement("p");
+          range.textContent = `Period: ${review.periodStart} to ${review.periodEnd}`;
+          const submitted = document.createElement("p");
+          submitted.textContent = `Submitted: ${new Date(
+            review.timestamp,
+          ).toLocaleString("en-IN")}`;
+          card.append(heading, range, submitted);
+
+          [
+            ["What Went Well", review.feedback.wentWell],
+            ["Areas to Improve", review.feedback.improve],
+            ["Suggestions or Advice", review.feedback.advice],
+            ["Next Period's Targets", review.feedback.targets],
+          ].forEach(([label, value]) => {
+            if (!value) {
+              return;
+            }
+            const line = document.createElement("p");
+            line.textContent = `${label}: ${value}`;
+            card.append(line);
+          });
+          reviewReceivedList.append(card);
+        });
+      }
+
+      function getReviewWeekStart(date) {
+        const weekStart = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate(),
+        );
+        weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+        return weekStart;
+      }
+
+      function getReviewPeriodRange(period, today) {
+        const start = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate(),
+        );
+        let end;
+
+        if (period === "weekly") {
+          start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+          end = new Date(start);
+          end.setDate(end.getDate() + 7);
+        } else if (period === "monthly") {
+          start.setDate(1);
+          end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+        } else {
+          end = new Date(start);
+          end.setDate(end.getDate() + 1);
+        }
+
+        return { start, end };
+      }
+
+      function isWithinReviewRange(value, start, end) {
+        const date = new Date(value);
+        return (
+          !Number.isNaN(date.getTime()) && date >= start && date < end
+        );
+      }
+
+      function formatReviewDate(date) {
+        return date.toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        });
+      }
+
+      function createReviewSummaryItem(title, value, details) {
+        const item = document.createElement("article");
+        item.className = "review-summary-item";
+        const heading = document.createElement("h5");
+        heading.textContent = title;
+        const valueLine = document.createElement("p");
+        valueLine.textContent = value;
+        item.append(heading, valueLine);
+
+        details.forEach((detail) => {
+          const detailLine = document.createElement("p");
+          detailLine.textContent = detail;
+          item.append(detailLine);
+        });
+        return item;
+      }
+
+      function renderReview() {
+        const reviewer = reviewUser.value;
+        const user = getReviewRecipient(reviewer);
+        const period = reviewPeriod.value;
+        const today = new Date();
+        const { start, end } = getReviewPeriodRange(period, today);
+        const periodLabel =
+          period === "daily"
+            ? `Today, ${formatReviewDate(start)}`
+            : period === "weekly"
+              ? `Week of ${formatReviewDate(start)} – ${formatReviewDate(
+                  new Date(end.getFullYear(), end.getMonth(), end.getDate() - 1),
+                )}`
+              : start.toLocaleDateString("en-IN", {
+                  month: "long",
+                  year: "numeric",
+                });
+        const periodEndDate = new Date(end);
+        periodEndDate.setDate(periodEndDate.getDate() - 1);
+        currentReviewContext = {
+          author: reviewer,
+          recipient: user,
+          period,
+          periodLabel,
+          periodStart: getLocalDateString(start),
+          periodEnd: getLocalDateString(periodEndDate),
+        };
+        const activities = dailyWorkEntries.filter(
+          (entry) =>
+            entry.assignee === user &&
+            isWithinReviewRange(entry.date, start, end),
+        );
+        const tasks = activities.filter((entry) => entry.type === "task");
+        const completedTasks = tasks.filter((task) => task.completed);
+        const incompleteTasks = tasks.filter((task) => !task.completed);
+        const problemEntries = activities.filter(
+          (entry) => entry.type === "problems",
+        );
+        const lectureEntries = activities.filter(
+          (entry) => entry.type === "lecture",
+        );
+        const weekStart = getReviewWeekStart(today);
+        const weeklyRange =
+          period === "monthly"
+            ? { start, end }
+            : {
+                start: weekStart,
+                end: new Date(
+                  weekStart.getFullYear(),
+                  weekStart.getMonth(),
+                  weekStart.getDate() + 7,
+                ),
+              };
+        const weeklyGoalEntries = weeklyGoals.filter((goal) => {
+          const goalDate = new Date(`${goal.weekStart}T00:00:00`);
+          return (
+            goal.assignee === user &&
+            !Number.isNaN(goalDate.getTime()) &&
+            goalDate >= weeklyRange.start &&
+            goalDate < weeklyRange.end
+          );
+        });
+        const reviewMonthDate = period === "monthly" ? start : today;
+        const reviewMonth = `${reviewMonthDate.getFullYear()}-${String(
+          reviewMonthDate.getMonth() + 1,
+        ).padStart(2, "0")}`;
+        const monthlyGoalEntries = monthlyGoals.filter(
+          (goal) => goal.assignee === user && goal.month === reviewMonth,
+        );
+        const periodQuestions = friendQuestions.filter(
+          (question) =>
+            question.assignee === user &&
+            isWithinReviewRange(question.date, start, end),
+        );
+        const answeredQuestions = periodQuestions.filter(
+          (question) => question.answered,
+        );
+        const pendingQuestions = periodQuestions.filter(
+          (question) => !question.answered,
+        );
+        const problemsTotal = problemEntries.reduce(
+          (total, entry) => total + entry.problems,
+          0,
+        );
+        const lectureMinutes = lectureEntries.reduce(
+          (total, entry) => total + entry.minutes,
+          0,
+        );
+        const hasRecordedData =
+          activities.length > 0 ||
+          weeklyGoalEntries.length > 0 ||
+          monthlyGoalEntries.length > 0 ||
+          periodQuestions.length > 0;
+
+        reviewResults.replaceChildren();
+        reviewResults.hidden = false;
+
+        const title = document.createElement("h4");
+        title.textContent = `${reviewer} reviewing ${user} — ${
+          period === "daily"
+            ? "Daily Review"
+            : period === "weekly"
+              ? "Weekly Review"
+              : "Monthly Review"
+        }`;
+        const dateLabel = document.createElement("p");
+        dateLabel.className = "review-period-label";
+        dateLabel.textContent = `Progress for ${user} • Review period: ${periodLabel}`;
+        reviewResults.append(title, dateLabel);
+
+        const summaryGrid = document.createElement("div");
+        summaryGrid.className = "review-summary-grid";
+        summaryGrid.append(
+          createReviewSummaryItem(
+            "Daily tasks",
+            tasks.length
+              ? `${completedTasks.length} complete • ${incompleteTasks.length} incomplete`
+              : "Insufficient data",
+            tasks.length
+              ? [
+                  ...completedTasks.map((task) => `Complete: ${task.title}`),
+                  ...incompleteTasks.map(
+                    (task) => `Incomplete: ${task.title}`,
+                  ),
+                ]
+              : ["No task entries were recorded during this review period."],
+          ),
+          createReviewSummaryItem(
+            "Problems solved",
+            problemEntries.length
+              ? `${problemsTotal} recorded`
+              : "Insufficient data",
+            problemEntries.length
+              ? problemEntries.map(
+                  (entry) => `${entry.topic}: ${entry.problems} solved`,
+                )
+              : ["No problem-solving entries were recorded in this period."],
+          ),
+          createReviewSummaryItem(
+            "Lecture progress",
+            lectureEntries.length
+              ? `${lectureMinutes} minutes recorded`
+              : "Insufficient data",
+            lectureEntries.length
+              ? lectureEntries.map(
+                  (entry) => `${entry.title}: ${entry.minutes} minutes`,
+                )
+              : ["No lecture entries were recorded in this period."],
+          ),
+          createReviewSummaryItem(
+            "Weekly goals",
+            weeklyGoalEntries.length
+              ? `${
+                  weeklyGoalEntries.filter((goal) => goal.completed).length
+                } complete of ${weeklyGoalEntries.length}`
+              : "Insufficient data",
+            weeklyGoalEntries.length
+              ? weeklyGoalEntries.map(
+                  (goal) =>
+                    `${goal.completed ? "Complete" : "Incomplete"}: ${
+                      goal.title
+                    }`,
+                )
+              : ["No weekly goals were recorded for this review scope."],
+          ),
+          createReviewSummaryItem(
+            "Monthly goals",
+            monthlyGoalEntries.length
+              ? `${
+                  monthlyGoalEntries.filter((goal) => goal.completed).length
+                } complete of ${monthlyGoalEntries.length}`
+              : "Insufficient data",
+            monthlyGoalEntries.length
+              ? monthlyGoalEntries.map(
+                  (goal) =>
+                    `${goal.completed ? "Complete" : "Incomplete"}: ${
+                      goal.title
+                    }`,
+                )
+              : ["No monthly goals were recorded for this month."],
+          ),
+          createReviewSummaryItem(
+            "Questions answered",
+            periodQuestions.length
+              ? `${answeredQuestions.length} answered`
+              : "Insufficient data",
+            periodQuestions.length
+              ? [
+                  `${pendingQuestions.length} pending`,
+                  "Questions are grouped by their creation date because answer dates are not stored.",
+                ]
+              : ["No questions assigned to this user were created in this period."],
+          ),
+        );
+        reviewResults.append(summaryGrid);
+
+        const suggestionHeading = document.createElement("h4");
+        suggestionHeading.textContent = "Suggestions";
+        const suggestionsList = document.createElement("ul");
+        suggestionsList.className = "review-suggestions";
+        const suggestions = [];
+
+        if (!hasRecordedData) {
+          suggestions.push(
+            "There is insufficient recorded data for this user and period. Add study work or goals to receive suggestions based on actual progress.",
+          );
+        } else {
+          if (incompleteTasks.length > 0) {
+            suggestions.push(
+              `Prioritize or reschedule these ${incompleteTasks.length} incomplete task(s): ${incompleteTasks
+                .map((task) => task.title)
+                .join(", ")}.`,
+            );
+          } else if (tasks.length > 0) {
+            suggestions.push(
+              `All ${completedTasks.length} task(s) recorded in this period are complete. Keep up the routine.`,
+            );
+          } else {
+            suggestions.push(
+              "There is insufficient task data for this period; record tasks to review their completion status.",
+            );
+          }
+
+          if (lectureEntries.length > 0) {
+            suggestions.push(
+              `${lectureMinutes} lecture minute(s) are recorded across ${lectureEntries.length} session(s). Continue with a focused session on ${
+                lectureEntries[lectureEntries.length - 1].title
+              }.`,
+            );
+          } else {
+            suggestions.push(
+              "No lecture progress is recorded for this period. Consider scheduling a focused session and logging the minutes completed.",
+            );
+          }
+
+          if (problemEntries.length > 0) {
+            suggestions.push(
+              `${problemsTotal} problem(s) are recorded across ${problemEntries.length} practice entry/entries. Keep building on that practice.`,
+            );
+          }
+
+          const incompleteWeeklyGoals = weeklyGoalEntries.filter(
+            (goal) => !goal.completed,
+          );
+          const completedWeeklyGoals = weeklyGoalEntries.filter(
+            (goal) => goal.completed,
+          );
+          if (weeklyGoalEntries.length > 0) {
+            if (incompleteWeeklyGoals.length > 0) {
+              suggestions.push(
+                `Choose a next step for an incomplete weekly goal: ${incompleteWeeklyGoals[0].title}. ${
+                  completedWeeklyGoals.length
+                    ? `${completedWeeklyGoals.length} of ${weeklyGoalEntries.length} weekly goal(s) are already complete.`
+                    : ""
+                }`,
+              );
+            } else {
+              suggestions.push(
+                `All ${completedWeeklyGoals.length} weekly goal(s) in this review scope are complete. Maintain the routine.`,
+              );
+            }
+          }
+
+          const incompleteMonthlyGoals = monthlyGoalEntries.filter(
+            (goal) => !goal.completed,
+          );
+          const completedMonthlyGoals = monthlyGoalEntries.filter(
+            (goal) => goal.completed,
+          );
+          if (monthlyGoalEntries.length > 0) {
+            if (incompleteMonthlyGoals.length > 0) {
+              suggestions.push(
+                `Plan a next step for this incomplete monthly goal: ${incompleteMonthlyGoals[0].title}. ${
+                  completedMonthlyGoals.length
+                    ? `${completedMonthlyGoals.length} of ${monthlyGoalEntries.length} monthly goal(s) are complete.`
+                    : ""
+                }`,
+              );
+            } else {
+              suggestions.push(
+                `All ${completedMonthlyGoals.length} monthly goal(s) for this month are complete. Keep the progress sustainable.`,
+              );
+            }
+          }
+
+          if (pendingQuestions.length > 0) {
+            suggestions.push(
+              `There are ${pendingQuestions.length} pending question(s) assigned to ${user}. Set aside time to answer them.`,
+            );
+          } else if (answeredQuestions.length > 0) {
+            suggestions.push(
+              `Review the ${answeredQuestions.length} answered question(s) created during this period and compare them with their expected answers.`,
+            );
+          }
+        }
+
+        suggestions.forEach((suggestion) => {
+          const item = document.createElement("li");
+          item.textContent = suggestion;
+          suggestionsList.append(item);
+        });
+        reviewResults.append(suggestionHeading, suggestionsList);
+
+        const dataNote = document.createElement("p");
+        dataNote.className = "review-data-note";
+        dataNote.textContent =
+          "Reviews use only saved entries in the selected date range. Answer dates are not stored, so question activity is grouped by question creation date.";
+        reviewResults.append(dataNote);
+        reviewFeedbackForm.hidden = false;
+        reviewFeedbackMessage.textContent = "";
+      }
+
+      generateReviewButton.addEventListener("click", renderReview);
+      reviewUser.addEventListener("change", () => {
+        currentReviewContext = null;
+        reviewResults.hidden = true;
+        reviewFeedbackForm.hidden = true;
+        reviewFeedbackForm.reset();
+        reviewFeedbackMessage.textContent = "";
+        renderReceivedReviews();
+      });
+      reviewPeriod.addEventListener("change", () => {
+        currentReviewContext = null;
+        reviewResults.hidden = true;
+        reviewFeedbackForm.hidden = true;
+        reviewFeedbackForm.reset();
+        reviewFeedbackMessage.textContent =
+          "Generate the selected review period before submitting feedback.";
+      });
+
+      reviewFeedbackForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!submittedReviewsStorageAvailable) {
+          reviewFeedbackMessage.textContent =
+            "Resolve the browser storage issue before submitting a review.";
+          return;
+        }
+        if (!currentReviewContext) {
+          reviewFeedbackMessage.textContent =
+            "Generate a progress review before submitting feedback.";
+          return;
+        }
+
+        const formData = new FormData(reviewFeedbackForm);
+        const feedback = {
+          wentWell: formData.get("wentWell").trim(),
+          improve: formData.get("improve").trim(),
+          advice: formData.get("advice").trim(),
+          targets: formData.get("targets").trim(),
+        };
+        if (!Object.values(feedback).some(Boolean)) {
+          reviewFeedbackMessage.textContent =
+            "Enter feedback in at least one field before submitting.";
+          return;
+        }
+        if (currentReviewContext.author === currentReviewContext.recipient) {
+          reviewFeedbackMessage.textContent =
+            "A user cannot submit a review to themselves.";
+          return;
+        }
+
+        const previousReviews = submittedReviews;
+        submittedReviews = [
+          ...submittedReviews,
+          {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            ...currentReviewContext,
+            feedback,
+            timestamp: new Date().toISOString(),
+          },
+        ];
+        if (saveSubmittedReviews()) {
+          reviewFeedbackForm.reset();
+          renderReceivedReviews();
+          reviewFeedbackMessage.textContent = `Review submitted to ${currentReviewContext.recipient}.`;
+        } else {
+          submittedReviews = previousReviews;
+        }
+      });
+
+      submittedReviews = loadSubmittedReviews();
+      renderReceivedReviews();
+    </script>
+  </body>
+</html>
