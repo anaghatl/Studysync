@@ -9,4 +9,6 @@ if (!supabaseUrl || !supabaseKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseProjectUrl = new URL(supabaseUrl).origin;
+
+export const supabase = createClient(supabaseProjectUrl, supabaseKey);
