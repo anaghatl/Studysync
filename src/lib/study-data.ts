@@ -142,7 +142,10 @@ const monthlyForm = requireElement("monthly-goal-form", HTMLFormElement);
 const monthlyAssignee = requireElement("monthly-goal-user", HTMLSelectElement);
 const monthlyUsers = requireElement("monthly-goal-users", HTMLElement);
 const monthlyMessage = requireElement("monthly-goal-message", HTMLElement);
-const workspaceSyncStatus = requireElement("workspace-sync-status", HTMLElement);
+const workspaceSyncStatus = requireElement(
+  "workspace-sync-status",
+  HTMLElement,
+);
 const inviteForm = requireElement("workspace-invite-form", HTMLFormElement);
 const inviteEmail = requireElement("workspace-invite-email", HTMLInputElement);
 const inviteMessage = requireElement("workspace-invite-message", HTMLElement);
@@ -192,10 +195,7 @@ const reviewFeedbackMessage = requireElement(
   "review-feedback-message",
   HTMLElement,
 );
-const reviewPeriodSelect = requireElement(
-  "review-period",
-  HTMLSelectElement,
-);
+const reviewPeriodSelect = requireElement("review-period", HTMLSelectElement);
 const reviewUserSelect = requireElement("review-user", HTMLSelectElement);
 const friendCreatorSelect = requireElement(
   "friend-question-creator",
@@ -254,8 +254,7 @@ function setFeedback(
 function authErrorMessage(error: unknown): string {
   if (
     error instanceof TypeError ||
-    (error instanceof Error &&
-      /network|fetch|timeout/i.test(error.message))
+    (error instanceof Error && /network|fetch|timeout/i.test(error.message))
   ) {
     return "Could not reach Supabase. Check your internet connection and try again.";
   }
@@ -271,7 +270,9 @@ function userLabel(userId: string): UserLabel | null {
     if (second.user_id === context?.workspace.owner_id) return 1;
     return first.user_id.localeCompare(second.user_id);
   });
-  const position = orderedMembers.findIndex((member) => member.user_id === userId);
+  const position = orderedMembers.findIndex(
+    (member) => member.user_id === userId,
+  );
   return position === 0 ? "User 1" : position === 1 ? "User 2" : null;
 }
 
@@ -279,7 +280,10 @@ function currentUserLabel(): UserLabel | null {
   return context ? userLabel(context.userId) : null;
 }
 
-function syncAssigneeOptions(select: HTMLSelectElement, restrictToSelf: boolean) {
+function syncAssigneeOptions(
+  select: HTMLSelectElement,
+  restrictToSelf: boolean,
+) {
   const self = currentUserLabel();
   for (const option of Array.from(select.options)) {
     option.disabled = restrictToSelf && option.value !== self;
@@ -367,9 +371,7 @@ function loadGoalDescriptions(): void {
     const stored = localStorage.getItem(key);
     const parsed: unknown = stored ? JSON.parse(stored) : {};
     goalDescriptions =
-      parsed &&
-      typeof parsed === "object" &&
-      !Array.isArray(parsed)
+      parsed && typeof parsed === "object" && !Array.isArray(parsed)
         ? (parsed as Record<string, string>)
         : {};
   } catch (error) {
@@ -402,19 +404,21 @@ function appendText(parent: HTMLElement, text: string): void {
 
 function renderDailyWork(): void {
   dailyList.replaceChildren();
-  const cloudEntries = tasks.map((task): LocalDailyEntry => ({
-    id: task.id,
-    type: "task",
-    assignee: userLabel(task.user_id) ?? "User 1",
-    title: task.title,
-    description: task.description ?? "",
-    duration: null,
-    minutes: null,
-    topic: "",
-    problems: null,
-    date: task.created_at,
-    completed: task.status === "completed",
-  }));
+  const cloudEntries = tasks.map(
+    (task): LocalDailyEntry => ({
+      id: task.id,
+      type: "task",
+      assignee: userLabel(task.user_id) ?? "User 1",
+      title: task.title,
+      description: task.description ?? "",
+      duration: null,
+      minutes: null,
+      topic: "",
+      problems: null,
+      date: task.created_at,
+      completed: task.status === "completed",
+    }),
+  );
   const entries = [...cloudEntries, ...readLocalEntries()];
 
   if (!entries.length) {
@@ -437,12 +441,12 @@ function renderDailyWork(): void {
     card.append(heading);
     appendText(card, `Assigned to ${entry.assignee}`);
 
-    if (
-      entry.type === "task" &&
-      tasks.some((task) => task.id === entry.id)
-    ) {
+    if (entry.type === "task" && tasks.some((task) => task.id === entry.id)) {
       if (entry.description) appendText(card, entry.description);
-      appendText(card, `Status: ${entry.completed ? "Complete" : "Incomplete"}`);
+      appendText(
+        card,
+        `Status: ${entry.completed ? "Complete" : "Incomplete"}`,
+      );
     } else if (entry.type === "lecture") {
       appendText(card, `Minutes completed: ${entry.minutes ?? 0}`);
       if (entry.duration !== null) {
@@ -455,11 +459,15 @@ function renderDailyWork(): void {
     const date = new Date(entry.date);
     appendText(
       card,
-      `Date: ${Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })}`,
+      `Date: ${
+        Number.isNaN(date.getTime())
+          ? "Unknown"
+          : date.toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })
+      }`,
     );
 
     if (entry.type === "task") {
@@ -468,7 +476,9 @@ function renderDailyWork(): void {
       const button = document.createElement("button");
       button.className = "daily-work-status-button";
       button.type = "button";
-      button.textContent = entry.completed ? "Mark incomplete" : "Mark complete";
+      button.textContent = entry.completed
+        ? "Mark incomplete"
+        : "Mark complete";
       button.setAttribute("aria-pressed", String(entry.completed));
       button.addEventListener("click", () => {
         void updateTaskStatus(entry.id, !entry.completed);
@@ -558,14 +568,13 @@ function dispatchReviewProgress(): void {
 }
 
 function renderGoals(): void {
-  const renderPeriod = (
-    period: GoalPeriod,
-    container: HTMLElement,
-  ): void => {
+  const renderPeriod = (period: GoalPeriod, container: HTMLElement): void => {
     container.replaceChildren();
     for (const label of ["User 1", "User 2"] as const) {
       const userGoals = goals
-        .filter((goal) => goal.period === period && userLabel(goal.user_id) === label)
+        .filter(
+          (goal) => goal.period === period && userLabel(goal.user_id) === label,
+        )
         .sort((first, second) =>
           second.start_date.localeCompare(first.start_date),
         );
@@ -675,8 +684,7 @@ function renderAll(): void {
 }
 
 function invitationErrorMessage(error: unknown, accepting = false): string {
-  const message =
-    error instanceof Error ? error.message.toLowerCase() : "";
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
 
   if (accepting) {
     if (message.includes("already has two members")) {
@@ -728,28 +736,33 @@ function invitationErrorMessage(error: unknown, accepting = false): string {
 }
 
 function invitationIdFromLocation(): string | null {
-  const invitationId = new URLSearchParams(window.location.search).get("invite");
+  const invitationId = new URLSearchParams(window.location.search).get(
+    "invite",
+  );
   if (!invitationId) return null;
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       invitationId,
     )
   ) {
-    throw new Error("This invitation link is invalid. Ask the owner for a new link.");
+    throw new Error(
+      "This invitation link is invalid. Ask the owner for a new link.",
+    );
   }
   return invitationId;
 }
 
-async function acceptWorkspaceInvitation(invitationId: string): Promise<void> {
+async function acceptWorkspaceInvitation(
+  invitationId: string,
+): Promise<string> {
   setFeedback(
     workspaceSyncStatus,
     "Checking your workspace invitation...",
     "loading",
   );
-  const { data, error } = await supabase.rpc(
-    "accept_workspace_invitation",
-    { invitation_id: invitationId },
-  );
+  const { data, error } = await supabase.rpc("accept_workspace_invitation", {
+    invitation_id: invitationId,
+  });
   if (error) throw new Error(invitationErrorMessage(error, true));
   if (typeof data !== "string" || !/^[0-9a-f-]{36}$/i.test(data)) {
     throw new Error(
@@ -765,6 +778,7 @@ async function acceptWorkspaceInvitation(invitationId: string): Promise<void> {
     "Invitation accepted. Loading your shared workspace...",
     "success",
   );
+  return data;
 }
 
 interface StoredWorkspaceInvitation {
@@ -774,6 +788,38 @@ interface StoredWorkspaceInvitation {
 
 function invitationStorageKey(workspaceContext: WorkspaceContext): string {
   return `studysync-workspace-invitation:${workspaceContext.workspace.id}:${workspaceContext.userId}`;
+}
+
+function workspaceSelectionStorageKey(userId: string): string {
+  return `studysync-active-workspace:${userId}`;
+}
+
+function readWorkspaceSelection(userId: string): string | null {
+  try {
+    const workspaceId = localStorage.getItem(
+      workspaceSelectionStorageKey(userId),
+    );
+    return workspaceId &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        workspaceId,
+      )
+      ? workspaceId
+      : null;
+  } catch (error) {
+    console.error(
+      "Could not read the saved StudySync workspace selection:",
+      error,
+    );
+    return null;
+  }
+}
+
+function saveWorkspaceSelection(userId: string, workspaceId: string): void {
+  try {
+    localStorage.setItem(workspaceSelectionStorageKey(userId), workspaceId);
+  } catch (error) {
+    console.error("Could not save the StudySync workspace selection:", error);
+  }
 }
 
 function readStoredInvitation(
@@ -788,7 +834,9 @@ function readStoredInvitation(
       parsed !== null &&
       "id" in parsed &&
       typeof parsed.id === "string" &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parsed.id) &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        parsed.id,
+      ) &&
       "email" in parsed &&
       typeof parsed.email === "string"
     ) {
@@ -808,7 +856,8 @@ function invitationUrl(invitationId: string): string {
 }
 
 function updateInvitationControls(workspaceContext: WorkspaceContext): void {
-  const isOwner = workspaceContext.workspace.owner_id === workspaceContext.userId;
+  const isOwner =
+    workspaceContext.workspace.owner_id === workspaceContext.userId;
   invitePanel.hidden = false;
   replaceInvitationButton.hidden = true;
   inviteForm.hidden = false;
@@ -898,7 +947,11 @@ function clearStoredInvitation(workspaceContext: WorkspaceContext): void {
 
 async function createWorkspaceInvitation(): Promise<void> {
   if (!context || context.workspace.owner_id !== context.userId) {
-    setFeedback(inviteMessage, "Only the workspace owner can invite a friend.", "error");
+    setFeedback(
+      inviteMessage,
+      "Only the workspace owner can invite a friend.",
+      "error",
+    );
     return;
   }
   if (context.members.length !== 1) {
@@ -912,7 +965,11 @@ async function createWorkspaceInvitation(): Promise<void> {
 
   const email = inviteEmail.value.trim();
   if (!email) {
-    setFeedback(inviteMessage, "Enter your friend's registered email address.", "error");
+    setFeedback(
+      inviteMessage,
+      "Enter your friend's registered email address.",
+      "error",
+    );
     return;
   }
 
@@ -920,7 +977,11 @@ async function createWorkspaceInvitation(): Promise<void> {
     'button[type="submit"]',
   );
   if (submitButton) submitButton.disabled = true;
-  setFeedback(inviteMessage, "Creating a secure workspace invitation...", "loading");
+  setFeedback(
+    inviteMessage,
+    "Creating a secure workspace invitation...",
+    "loading",
+  );
   invitationLinkContainer.hidden = true;
 
   try {
@@ -944,8 +1005,7 @@ async function createWorkspaceInvitation(): Promise<void> {
     invitationLinkContainer.hidden = false;
     invitationStatus.textContent = "Invitation issued · acceptance unconfirmed";
     invitationStatus.dataset.state = "info";
-    connectedMember.textContent =
-      `Supabase confirms 1 of 2 members. The invitation was created for ${email}; acceptance and expiry cannot be checked with the available functions.`;
+    connectedMember.textContent = `Supabase confirms 1 of 2 members. The invitation was created for ${email}; acceptance and expiry cannot be checked with the available functions.`;
     inviteEmail.value = "";
     inviteForm.hidden = true;
     replaceInvitationButton.hidden = false;
@@ -955,7 +1015,10 @@ async function createWorkspaceInvitation(): Promise<void> {
         JSON.stringify({ id: data, email }),
       );
     } catch (storageError) {
-      console.error("Could not save the workspace invitation link locally:", storageError);
+      console.error(
+        "Could not save the workspace invitation link locally:",
+        storageError,
+      );
       replaceInvitationButton.hidden = false;
       setFeedback(
         inviteMessage,
@@ -970,7 +1033,10 @@ async function createWorkspaceInvitation(): Promise<void> {
       "success",
     );
   } catch (error) {
-    console.error("Could not create the StudySync workspace invitation:", error);
+    console.error(
+      "Could not create the StudySync workspace invitation:",
+      error,
+    );
     const storedInvitation = readStoredInvitation(context);
     const hasActiveInvitation =
       error instanceof Error &&
@@ -1036,9 +1102,20 @@ function refreshCollaborationFromRealtime(): void {
     const activeContext = context;
     if (!activeContext) return;
     void loadCollaborativeRecords(activeContext).catch((error: unknown) => {
-      console.error("Could not sync shared StudySync questions and reviews:", error);
-      setFeedback(friendQuestionCreateMessage, authErrorMessage(error), "error");
-      setFeedback(friendQuestionAnswerMessage, authErrorMessage(error), "error");
+      console.error(
+        "Could not sync shared StudySync questions and reviews:",
+        error,
+      );
+      setFeedback(
+        friendQuestionCreateMessage,
+        authErrorMessage(error),
+        "error",
+      );
+      setFeedback(
+        friendQuestionAnswerMessage,
+        authErrorMessage(error),
+        "error",
+      );
       setFeedback(reviewFeedbackMessage, authErrorMessage(error), "error");
     });
   }, 150);
@@ -1053,10 +1130,16 @@ function readQuestionMetadata(
   userId: string,
 ): Map<string, QuestionMetadata> {
   try {
-    const serialized = localStorage.getItem(questionMetadataKey(workspaceId, userId));
+    const serialized = localStorage.getItem(
+      questionMetadataKey(workspaceId, userId),
+    );
     if (!serialized) return new Map();
     const parsed: unknown = JSON.parse(serialized);
-    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      Array.isArray(parsed)
+    ) {
       throw new Error("Saved question details have an invalid format.");
     }
     const metadata = new Map<string, QuestionMetadata>();
@@ -1132,19 +1215,21 @@ function dispatchCloudQuestions(
     if (!creator) return [];
     const answer = latestAnswers.get(question.id);
     const details = metadata.get(question.id);
-    return [{
-      id: question.id,
-      workspaceId: question.workspace_id,
-      creator,
-      assignee: creator === "User 1" ? "User 2" : "User 1",
-      question: question.question_text,
-      hints: details?.hints ?? "",
-      expectedAnswer: details?.expectedAnswer ?? "",
-      answer: answer?.answer_text ?? "",
-      answered: Boolean(answer),
-      revealed: details?.revealed ?? false,
-      date: question.created_at,
-    }];
+    return [
+      {
+        id: question.id,
+        workspaceId: question.workspace_id,
+        creator,
+        assignee: creator === "User 1" ? "User 2" : "User 1",
+        question: question.question_text,
+        hints: details?.hints ?? "",
+        expectedAnswer: details?.expectedAnswer ?? "",
+        answer: answer?.answer_text ?? "",
+        answered: Boolean(answer),
+        revealed: details?.revealed ?? false,
+        date: question.created_at,
+      },
+    ];
   });
   window.dispatchEvent(
     new CustomEvent<CloudQuestionView[]>("studysync-cloud-questions", {
@@ -1169,7 +1254,11 @@ function periodDateRange(
   period: ReviewPeriod,
   today: Date,
 ): { start: Date; end: Date } {
-  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const start = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
   let end: Date;
   if (period === "weekly") {
     start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
@@ -1204,15 +1293,17 @@ function parseReviewFeedback(feedback: string): CloudReviewView["feedback"] {
     ["Areas to Improve", "improve"],
     ["Next Period's Targets", "targets"],
   ]);
-  const sectionPattern = /(?:^|\n\n)(What Went Well|Areas to Improve|Next Period's Targets):\n/g;
+  const sectionPattern =
+    /(?:^|\n\n)(What Went Well|Areas to Improve|Next Period's Targets):\n/g;
   const matches = [...feedback.matchAll(sectionPattern)];
   for (let index = 0; index < matches.length; index += 1) {
     const match = matches[index];
     const label = match[1];
     const start = (match.index ?? 0) + match[0].length;
-    const end = index + 1 < matches.length
-      ? (matches[index + 1].index ?? feedback.length)
-      : feedback.length;
+    const end =
+      index + 1 < matches.length
+        ? (matches[index + 1].index ?? feedback.length)
+        : feedback.length;
     const key = labels.get(label);
     if (key) sections[key] = feedback.slice(start, end).trim();
   }
@@ -1235,23 +1326,28 @@ function dispatchCloudReviews(workspaceContext: WorkspaceContext): void {
         ? `Day of ${start.toLocaleDateString("en-IN")}`
         : review.review_period === "weekly"
           ? `Week of ${start.toLocaleDateString("en-IN")} – ${end.toLocaleDateString("en-IN")}`
-          : start.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
-    return [{
-      id: review.id,
-      workspaceId: review.workspace_id,
-      author,
-      recipient,
-      period: review.review_period,
-      periodLabel,
-      periodStart: review.review_date,
-      periodEnd: localDateString(end),
-      feedback: parseReviewFeedback(review.feedback),
-      suggestions: (review.suggestions ?? "").replace(
-        /^Suggestions or Advice:\n/,
-        "",
-      ),
-      timestamp: review.created_at,
-    }];
+          : start.toLocaleDateString("en-IN", {
+              month: "long",
+              year: "numeric",
+            });
+    return [
+      {
+        id: review.id,
+        workspaceId: review.workspace_id,
+        author,
+        recipient,
+        period: review.review_period,
+        periodLabel,
+        periodStart: review.review_date,
+        periodEnd: localDateString(end),
+        feedback: parseReviewFeedback(review.feedback),
+        suggestions: (review.suggestions ?? "").replace(
+          /^Suggestions or Advice:\n/,
+          "",
+        ),
+        timestamp: review.created_at,
+      },
+    ];
   });
   window.dispatchEvent(
     new CustomEvent<CloudReviewView[]>("studysync-cloud-reviews", {
@@ -1272,7 +1368,11 @@ async function loadCollaborativeRecords(
 ): Promise<void> {
   const sequence = ++collaborationLoadSequence;
   const workspaceId = workspaceContext.workspace.id;
-  setFeedback(friendQuestionCreateMessage, "Loading shared questions...", "loading");
+  setFeedback(
+    friendQuestionCreateMessage,
+    "Loading shared questions...",
+    "loading",
+  );
   setFeedback(friendQuestionAnswerMessage, "Loading answers...", "loading");
   setFeedback(reviewFeedbackMessage, "Loading shared reviews...", "loading");
 
@@ -1287,7 +1387,9 @@ async function loadCollaborativeRecords(
       .order("created_at", { ascending: true }),
     supabase
       .from("reviews")
-      .select("id,workspace_id,reviewer_id,reviewee_id,review_period,review_date,feedback,suggestions,created_at")
+      .select(
+        "id,workspace_id,reviewer_id,reviewee_id,review_period,review_date,feedback,suggestions,created_at",
+      )
       .eq("workspace_id", workspaceId)
       .order("created_at", { ascending: false }),
   ]);
@@ -1299,15 +1401,15 @@ async function loadCollaborativeRecords(
     const { data: answerRows, error: answerError } = await supabase
       .from("answers")
       .select("id,question_id,user_id,answer_text,created_at")
-      .in("question_id", loadedQuestions.map((question) => question.id))
+      .in(
+        "question_id",
+        loadedQuestions.map((question) => question.id),
+      )
       .order("created_at", { ascending: true });
     if (answerError) throw answerError;
     loadedAnswers = (answerRows ?? []) as AnswerRow[];
   }
-  if (
-    sequence !== collaborationLoadSequence ||
-    context !== workspaceContext
-  ) {
+  if (sequence !== collaborationLoadSequence || context !== workspaceContext) {
     return;
   }
   const loadedReviews = (reviewRows ?? []) as ReviewRow[];
@@ -1366,11 +1468,19 @@ function legacyLocalCount(storageKey: string, label: string): string {
 async function createCloudQuestions(): Promise<void> {
   const workspaceContext = context;
   if (!workspaceContext) {
-    setFeedback(friendQuestionCreateMessage, "Sign in to create shared questions.", "error");
+    setFeedback(
+      friendQuestionCreateMessage,
+      "Sign in to create shared questions.",
+      "error",
+    );
     return;
   }
   if (workspaceContext.members.length !== 2) {
-    setFeedback(friendQuestionCreateMessage, "A second workspace member must join before creating questions for a friend.", "error");
+    setFeedback(
+      friendQuestionCreateMessage,
+      "A second workspace member must join before creating questions for a friend.",
+      "error",
+    );
     return;
   }
   const self = currentUserLabel();
@@ -1378,12 +1488,24 @@ async function createCloudQuestions(): Promise<void> {
   const creator = form.get("creator");
   const assignee = form.get("assignee");
   const count = Number(form.get("questionCount"));
-  if (creator !== self || (assignee !== "User 1" && assignee !== "User 2") || assignee === self) {
-    setFeedback(friendQuestionCreateMessage, "Questions must be created by your signed-in account and assigned to the other workspace member.", "error");
+  if (
+    creator !== self ||
+    (assignee !== "User 1" && assignee !== "User 2") ||
+    assignee === self
+  ) {
+    setFeedback(
+      friendQuestionCreateMessage,
+      "Questions must be created by your signed-in account and assigned to the other workspace member.",
+      "error",
+    );
     return;
   }
   if (!Number.isInteger(count) || count < 1 || count > 4) {
-    setFeedback(friendQuestionCreateMessage, "Select between 1 and 4 questions.", "error");
+    setFeedback(
+      friendQuestionCreateMessage,
+      "Select between 1 and 4 questions.",
+      "error",
+    );
     return;
   }
   const storageProbe = `${questionMetadataKey(workspaceContext.workspace.id, workspaceContext.userId)}:probe`;
@@ -1391,7 +1513,10 @@ async function createCloudQuestions(): Promise<void> {
     localStorage.setItem(storageProbe, "1");
     localStorage.removeItem(storageProbe);
   } catch (error) {
-    console.error("Cannot preserve expected answers in browser storage:", error);
+    console.error(
+      "Cannot preserve expected answers in browser storage:",
+      error,
+    );
     setFeedback(
       friendQuestionCreateMessage,
       "Questions were not created because this browser cannot save their hints and expected answers. Enable browser storage and try again.",
@@ -1399,21 +1524,34 @@ async function createCloudQuestions(): Promise<void> {
     );
     return;
   }
-  const drafts: { question: string; hints: string; expectedAnswer: string }[] = [];
+  const drafts: { question: string; hints: string; expectedAnswer: string }[] =
+    [];
   for (let index = 0; index < count; index += 1) {
     const question = String(form.get(`question-${index}`) ?? "").trim();
     const hints = String(form.get(`hints-${index}`) ?? "").trim();
-    const expectedAnswer = String(form.get(`expectedAnswer-${index}`) ?? "").trim();
+    const expectedAnswer = String(
+      form.get(`expectedAnswer-${index}`) ?? "",
+    ).trim();
     if (!question || !expectedAnswer) {
-      setFeedback(friendQuestionCreateMessage, `Enter both the question and expected answer for Question ${index + 1}.`, "error");
+      setFeedback(
+        friendQuestionCreateMessage,
+        `Enter both the question and expected answer for Question ${index + 1}.`,
+        "error",
+      );
       return;
     }
     drafts.push({ question, hints, expectedAnswer });
   }
 
-  const submit = friendQuestionForm.querySelector<HTMLButtonElement>('button[type="submit"]');
+  const submit = friendQuestionForm.querySelector<HTMLButtonElement>(
+    'button[type="submit"]',
+  );
   if (submit) submit.disabled = true;
-  setFeedback(friendQuestionCreateMessage, "Saving questions to the shared workspace...", "loading");
+  setFeedback(
+    friendQuestionCreateMessage,
+    "Saving questions to the shared workspace...",
+    "loading",
+  );
   const metadata: QuestionMetadata[] = [];
   let created = 0;
   let metadataSaved = true;
@@ -1429,7 +1567,10 @@ async function createCloudQuestions(): Promise<void> {
         .select("id")
         .single();
       if (error) throw error;
-      if (!data?.id) throw new Error("Supabase saved a question but returned no question ID.");
+      if (!data?.id)
+        throw new Error(
+          "Supabase saved a question but returned no question ID.",
+        );
       metadata.push({
         questionId: data.id,
         hints: draft.hints,
@@ -1446,7 +1587,10 @@ async function createCloudQuestions(): Promise<void> {
       );
     } catch (error) {
       metadataSaved = false;
-      console.error("Cloud questions were saved, but their local expected-answer details could not be saved:", error);
+      console.error(
+        "Cloud questions were saved, but their local expected-answer details could not be saved:",
+        error,
+      );
     }
     friendQuestionForm.reset();
     syncCollaborationControls(workspaceContext);
@@ -1469,7 +1613,11 @@ async function createCloudQuestions(): Promise<void> {
         : "Questions were saved in Supabase, but hints and expected answers could not be saved in this browser. The questions remain available; restore browser storage before entering those details again.",
       metadataSaved ? "success" : "error",
     );
-    if (created) friendQuestionForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (created)
+      friendQuestionForm.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
   } catch (error) {
     console.error("Could not save StudySync questions:", error);
     if (metadata.length) {
@@ -1481,12 +1629,20 @@ async function createCloudQuestions(): Promise<void> {
         );
       } catch (metadataError) {
         metadataSaved = false;
-        console.error("Could not preserve details for partially saved questions:", metadataError);
+        console.error(
+          "Could not preserve details for partially saved questions:",
+          metadataError,
+        );
       }
     }
-    await loadCollaborativeRecords(workspaceContext).catch((loadError: unknown) => {
-      console.error("Could not refresh questions after a save failure:", loadError);
-    });
+    await loadCollaborativeRecords(workspaceContext).catch(
+      (loadError: unknown) => {
+        console.error(
+          "Could not refresh questions after a save failure:",
+          loadError,
+        );
+      },
+    );
     setFeedback(
       friendQuestionCreateMessage,
       created
@@ -1505,11 +1661,19 @@ async function submitCloudAnswer(form: HTMLFormElement): Promise<void> {
   const questionId = form.dataset.questionId;
   const answerText = String(new FormData(form).get("answer") ?? "").trim();
   if (!workspaceContext || !questionId) {
-    setFeedback(message, "This question is not available in the current workspace.", "error");
+    setFeedback(
+      message,
+      "This question is not available in the current workspace.",
+      "error",
+    );
     return;
   }
   if (workspaceContext.members.length !== 2) {
-    setFeedback(message, "A second workspace member must join before answering shared questions.", "error");
+    setFeedback(
+      message,
+      "A second workspace member must join before answering shared questions.",
+      "error",
+    );
     return;
   }
   if (!answerText) {
@@ -1518,7 +1682,11 @@ async function submitCloudAnswer(form: HTMLFormElement): Promise<void> {
   }
   const question = cloudQuestions.find((row) => row.id === questionId);
   if (!question || question.user_id === workspaceContext.userId) {
-    setFeedback(message, "Only the other workspace member can answer this question.", "error");
+    setFeedback(
+      message,
+      "Only the other workspace member can answer this question.",
+      "error",
+    );
     return;
   }
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
@@ -1541,7 +1709,10 @@ async function submitCloudAnswer(form: HTMLFormElement): Promise<void> {
   try {
     await loadCollaborativeRecords(workspaceContext);
   } catch (error) {
-    console.error("Answer was saved but the shared answer list could not be refreshed:", error);
+    console.error(
+      "Answer was saved but the shared answer list could not be refreshed:",
+      error,
+    );
     setFeedback(
       message,
       `Answer was saved, but the list could not refresh. ${authErrorMessage(error)}`,
@@ -1555,30 +1726,50 @@ async function submitCloudAnswer(form: HTMLFormElement): Promise<void> {
 async function submitCloudReview(): Promise<void> {
   const workspaceContext = context;
   if (!workspaceContext) {
-    setFeedback(reviewFeedbackMessage, "Sign in to submit a shared review.", "error");
+    setFeedback(
+      reviewFeedbackMessage,
+      "Sign in to submit a shared review.",
+      "error",
+    );
     return;
   }
   if (workspaceContext.members.length !== 2) {
-    setFeedback(reviewFeedbackMessage, "A second workspace member must join before submitting a shared review.", "error");
+    setFeedback(
+      reviewFeedbackMessage,
+      "A second workspace member must join before submitting a shared review.",
+      "error",
+    );
     return;
   }
   const reviewer = currentUserLabel();
   const revieweeLabel: UserLabel | null =
     reviewer === "User 1" ? "User 2" : reviewer === "User 2" ? "User 1" : null;
   if (reviewUserSelect.value !== reviewer || !revieweeLabel) {
-    setFeedback(reviewFeedbackMessage, "Reviews must be submitted by your signed-in account to the other workspace member.", "error");
+    setFeedback(
+      reviewFeedbackMessage,
+      "Reviews must be submitted by your signed-in account to the other workspace member.",
+      "error",
+    );
     return;
   }
   const reviewee = workspaceContext.members.find(
     (member) => userLabel(member.user_id) === revieweeLabel,
   );
   if (!reviewee) {
-    setFeedback(reviewFeedbackMessage, "The other workspace member could not be verified.", "error");
+    setFeedback(
+      reviewFeedbackMessage,
+      "The other workspace member could not be verified.",
+      "error",
+    );
     return;
   }
   const period = reviewPeriodSelect.value;
   if (period !== "daily" && period !== "weekly" && period !== "monthly") {
-    setFeedback(reviewFeedbackMessage, "Choose a valid review period.", "error");
+    setFeedback(
+      reviewFeedbackMessage,
+      "Choose a valid review period.",
+      "error",
+    );
     return;
   }
   const values = new FormData(reviewForm);
@@ -1587,26 +1778,41 @@ async function submitCloudReview(): Promise<void> {
   const advice = String(values.get("advice") ?? "").trim();
   const targets = String(values.get("targets") ?? "").trim();
   if (![wentWell, improve, advice, targets].some(Boolean)) {
-    setFeedback(reviewFeedbackMessage, "Enter feedback in at least one field before submitting.", "error");
+    setFeedback(
+      reviewFeedbackMessage,
+      "Enter feedback in at least one field before submitting.",
+      "error",
+    );
     return;
   }
   const feedback = [
     wentWell ? `What Went Well:\n${wentWell}` : "",
     improve ? `Areas to Improve:\n${improve}` : "",
     targets ? `Next Period's Targets:\n${targets}` : "",
-  ].filter(Boolean).join("\n\n");
+  ]
+    .filter(Boolean)
+    .join("\n\n");
   const generatedSuggestions = Array.from(
     document.querySelectorAll("#review-results .review-suggestions li"),
   )
     .map((item) => item.textContent?.trim() ?? "")
     .filter(Boolean);
-  const suggestions = [advice ? `Suggestions or Advice:\n${advice}` : "", ...generatedSuggestions]
+  const suggestions = [
+    advice ? `Suggestions or Advice:\n${advice}` : "",
+    ...generatedSuggestions,
+  ]
     .filter(Boolean)
     .join("\n\n");
   const { start } = periodDateRange(period, new Date());
-  const submit = reviewForm.querySelector<HTMLButtonElement>('button[type="submit"]');
+  const submit = reviewForm.querySelector<HTMLButtonElement>(
+    'button[type="submit"]',
+  );
   if (submit) submit.disabled = true;
-  setFeedback(reviewFeedbackMessage, "Submitting review to the shared workspace...", "loading");
+  setFeedback(
+    reviewFeedbackMessage,
+    "Submitting review to the shared workspace...",
+    "loading",
+  );
   try {
     const { error } = await supabase.from("reviews").insert({
       workspace_id: workspaceContext.workspace.id,
@@ -1625,11 +1831,18 @@ async function submitCloudReview(): Promise<void> {
     return;
   }
   reviewForm.reset();
-  setFeedback(reviewFeedbackMessage, `Review submitted to ${revieweeLabel}.`, "success");
+  setFeedback(
+    reviewFeedbackMessage,
+    `Review submitted to ${revieweeLabel}.`,
+    "success",
+  );
   try {
     await loadCollaborativeRecords(workspaceContext);
   } catch (error) {
-    console.error("Review was submitted but the review list could not be refreshed:", error);
+    console.error(
+      "Review was submitted but the review list could not be refreshed:",
+      error,
+    );
     setFeedback(
       reviewFeedbackMessage,
       `Review was submitted, but the list could not refresh. ${authErrorMessage(error)}`,
@@ -1643,12 +1856,14 @@ async function submitCloudReview(): Promise<void> {
 function persistExpectedAnswerReveal(question: CloudQuestionView): void {
   if (!context) return;
   try {
-    saveQuestionMetadata(context.workspace.id, context.userId, [{
-      questionId: question.id,
-      hints: question.hints,
-      expectedAnswer: question.expectedAnswer,
-      revealed: true,
-    }]);
+    saveQuestionMetadata(context.workspace.id, context.userId, [
+      {
+        questionId: question.id,
+        hints: question.hints,
+        expectedAnswer: question.expectedAnswer,
+        revealed: true,
+      },
+    ]);
   } catch (error) {
     console.error("Could not save expected-answer reveal state:", error);
     setFeedback(
@@ -1675,9 +1890,13 @@ function syncCollaborationControls(workspaceContext: WorkspaceContext): void {
     if (selected) select.value = selected;
   }
   if (workspaceContext.members.length < 2) {
-    friendQuestionForm.querySelector<HTMLButtonElement>('button[type="submit"]')?.setAttribute("disabled", "true");
+    friendQuestionForm
+      .querySelector<HTMLButtonElement>('button[type="submit"]')
+      ?.setAttribute("disabled", "true");
   } else {
-    friendQuestionForm.querySelector<HTMLButtonElement>('button[type="submit"]')?.removeAttribute("disabled");
+    friendQuestionForm
+      .querySelector<HTMLButtonElement>('button[type="submit"]')
+      ?.removeAttribute("disabled");
   }
 }
 
@@ -1722,7 +1941,10 @@ async function refreshMembershipFromRealtime(
   try {
     await loadCollaborativeRecords(refreshedContext);
   } catch (error) {
-    console.error("Could not refresh shared StudySync questions and reviews:", error);
+    console.error(
+      "Could not refresh shared StudySync questions and reviews:",
+      error,
+    );
     const message = `Could not refresh shared questions and reviews. ${authErrorMessage(error)}`;
     setFeedback(friendQuestionCreateMessage, message, "error");
     setFeedback(friendQuestionAnswerMessage, message, "error");
@@ -1820,12 +2042,17 @@ function startWorkspaceSync(workspaceId: string): void {
       }
     });
   workspaceSyncChannel = channel;
-  setFeedback(workspaceSyncStatus, "Connecting to live workspace sync...", "loading");
+  setFeedback(
+    workspaceSyncStatus,
+    "Connecting to live workspace sync...",
+    "loading",
+  );
 }
 
 async function fetchWorkspaceContext(
   userId: string,
   userEmail: string | null,
+  acceptedWorkspaceId: string | null = null,
 ): Promise<WorkspaceContext> {
   const { data: memberships, error: membershipError } = await supabase
     .from("workspace_members")
@@ -1833,11 +2060,26 @@ async function fetchWorkspaceContext(
     .eq("user_id", userId);
   if (membershipError) throw membershipError;
 
-  const workspaceIds = [...new Set((memberships ?? []).map(
-    (membership) => membership.workspace_id as string,
-  ))];
+  const workspaceIds = [
+    ...new Set(
+      (memberships ?? []).map(
+        (membership) => membership.workspace_id as string,
+      ),
+    ),
+  ];
+  const preferredWorkspaceId =
+    acceptedWorkspaceId ?? readWorkspaceSelection(userId);
 
-  if (workspaceIds.length > 1) {
+  if (acceptedWorkspaceId && !workspaceIds.includes(acceptedWorkspaceId)) {
+    throw new Error(
+      "The accepted invitation workspace is not present in the current membership list. Ask the project administrator to verify workspace membership before continuing.",
+    );
+  }
+
+  if (
+    workspaceIds.length > 1 &&
+    !workspaceIds.includes(preferredWorkspaceId ?? "")
+  ) {
     throw new Error(
       "This account is a member of multiple StudySync workspaces, but the current page supports one workspace per account. Ask the project administrator to review workspace membership.",
     );
@@ -1854,10 +2096,10 @@ async function fetchWorkspaceContext(
       .order("created_at", { ascending: true });
     if (workspaceError) throw workspaceError;
     const workspaceRows = (workspaces ?? []) as WorkspaceRow[];
+    const selectedWorkspaceId =
+      workspaceIds.length === 1 ? workspaceIds[0] : preferredWorkspaceId;
     workspace =
-      workspaceRows.find((row) => row.owner_id === userId) ??
-      workspaceRows[0] ??
-      null;
+      workspaceRows.find((row) => row.id === selectedWorkspaceId) ?? null;
   } else {
     const { data: ownedWorkspaces, error: ownedError } = await supabase
       .from("workspaces")
@@ -1918,7 +2160,11 @@ async function fetchWorkspaceContext(
   return { workspace, members: workspaceMembers, userId, userEmail };
 }
 
-function legacyNotice(storageKey: string, label: string, count = countLegacyRecords(storageKey)): string {
+function legacyNotice(
+  storageKey: string,
+  label: string,
+  count = countLegacyRecords(storageKey),
+): string {
   return count
     ? ` ${count} existing local ${label}${count === 1 ? "" : "s"} were preserved and not imported because their User 1/User 2 ownership cannot be verified.`
     : "";
@@ -1928,22 +2174,34 @@ async function loadRecords(): Promise<void> {
   const activeContext = context;
   if (!activeContext) return;
   setFeedback(dailyMessage, "Loading tasks from Supabase...", "loading");
-  setFeedback(weeklyMessage, "Loading weekly goals from Supabase...", "loading");
-  setFeedback(monthlyMessage, "Loading monthly goals from Supabase...", "loading");
+  setFeedback(
+    weeklyMessage,
+    "Loading weekly goals from Supabase...",
+    "loading",
+  );
+  setFeedback(
+    monthlyMessage,
+    "Loading monthly goals from Supabase...",
+    "loading",
+  );
 
-  const [{ data: taskRows, error: tasksError }, { data: goalRows, error: goalsError }] =
-    await Promise.all([
-      supabase
-        .from("tasks")
-        .select("id,workspace_id,user_id,title,description,due_date,status,created_at")
-        .eq("workspace_id", activeContext.workspace.id)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("goals")
-        .select("id,workspace_id,user_id,title,period,start_date,end_date,status")
-        .eq("workspace_id", activeContext.workspace.id)
-        .order("start_date", { ascending: false }),
-    ]);
+  const [
+    { data: taskRows, error: tasksError },
+    { data: goalRows, error: goalsError },
+  ] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select(
+        "id,workspace_id,user_id,title,description,due_date,status,created_at",
+      )
+      .eq("workspace_id", activeContext.workspace.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("goals")
+      .select("id,workspace_id,user_id,title,period,start_date,end_date,status")
+      .eq("workspace_id", activeContext.workspace.id)
+      .order("start_date", { ascending: false }),
+  ]);
   if (tasksError) throw tasksError;
   if (goalsError) throw goalsError;
   if (context !== activeContext) return;
@@ -1975,7 +2233,10 @@ async function loadRecords(): Promise<void> {
   );
 }
 
-async function updateTaskStatus(taskId: string, completed: boolean): Promise<void> {
+async function updateTaskStatus(
+  taskId: string,
+  completed: boolean,
+): Promise<void> {
   if (!context) return;
   setFeedback(dailyMessage, "Updating task...", "loading");
   const { error } = await supabase
@@ -2029,7 +2290,11 @@ async function editTask(task: TaskRow): Promise<void> {
   }
   try {
     await loadRecords();
-    setFeedback(dailyMessage, "Task updated in the shared workspace.", "success");
+    setFeedback(
+      dailyMessage,
+      "Task updated in the shared workspace.",
+      "success",
+    );
   } catch (loadError) {
     setFeedback(dailyMessage, authErrorMessage(loadError), "error");
   }
@@ -2053,7 +2318,11 @@ async function deleteTask(task: TaskRow): Promise<void> {
   }
   try {
     await loadRecords();
-    setFeedback(dailyMessage, "Task deleted from the shared workspace.", "success");
+    setFeedback(
+      dailyMessage,
+      "Task deleted from the shared workspace.",
+      "success",
+    );
   } catch (loadError) {
     setFeedback(dailyMessage, authErrorMessage(loadError), "error");
   }
@@ -2376,9 +2645,7 @@ function clearSignedInData(): void {
   dispatchReviewProgress();
 }
 
-async function initializeForSession(
-  session: Session | null,
-): Promise<void> {
+async function initializeForSession(session: Session | null): Promise<void> {
   if (!session) {
     requestSequence += 1;
     currentSessionUserId = null;
@@ -2388,10 +2655,7 @@ async function initializeForSession(
     return;
   }
   if (currentSessionUserId === session.user.id && context) return;
-  if (
-    initializingUserId === session.user.id &&
-    initializationPromise
-  ) {
+  if (initializingUserId === session.user.id && initializationPromise) {
     return initializationPromise;
   }
 
@@ -2420,18 +2684,32 @@ async function initializeForSession(
   setFeedback(dailyMessage, busyText, "loading");
   setFeedback(weeklyMessage, busyText, "loading");
   setFeedback(monthlyMessage, busyText, "loading");
-  setFeedback(friendQuestionCreateMessage, "Preparing shared questions...", "loading");
-  setFeedback(friendQuestionAnswerMessage, "Preparing shared answers...", "loading");
+  setFeedback(
+    friendQuestionCreateMessage,
+    "Preparing shared questions...",
+    "loading",
+  );
+  setFeedback(
+    friendQuestionAnswerMessage,
+    "Preparing shared answers...",
+    "loading",
+  );
   setFeedback(reviewFeedbackMessage, "Preparing shared reviews...", "loading");
 
   initializationPromise = (async () => {
     try {
       const invitationId = invitationIdFromLocation();
-      if (invitationId) await acceptWorkspaceInvitation(invitationId);
+      const acceptedWorkspaceId = invitationId
+        ? await acceptWorkspaceInvitation(invitationId)
+        : null;
+      if (acceptedWorkspaceId) {
+        saveWorkspaceSelection(session.user.id, acceptedWorkspaceId);
+      }
       if (sequence !== requestSequence) return;
       const workspaceContext = await fetchWorkspaceContext(
         session.user.id,
         session.user.email ?? null,
+        acceptedWorkspaceId,
       );
       if (sequence !== requestSequence) return;
       context = workspaceContext;
@@ -2445,10 +2723,25 @@ async function initializeForSession(
       try {
         await loadCollaborativeRecords(workspaceContext);
       } catch (collaborationError) {
-        console.error("Could not load shared StudySync questions and reviews:", collaborationError);
-        setFeedback(friendQuestionCreateMessage, `Could not load shared questions. ${authErrorMessage(collaborationError)}`, "error");
-        setFeedback(friendQuestionAnswerMessage, `Could not load shared answers. ${authErrorMessage(collaborationError)}`, "error");
-        setFeedback(reviewFeedbackMessage, `Could not load shared reviews. ${authErrorMessage(collaborationError)}`, "error");
+        console.error(
+          "Could not load shared StudySync questions and reviews:",
+          collaborationError,
+        );
+        setFeedback(
+          friendQuestionCreateMessage,
+          `Could not load shared questions. ${authErrorMessage(collaborationError)}`,
+          "error",
+        );
+        setFeedback(
+          friendQuestionAnswerMessage,
+          `Could not load shared answers. ${authErrorMessage(collaborationError)}`,
+          "error",
+        );
+        setFeedback(
+          reviewFeedbackMessage,
+          `Could not load shared reviews. ${authErrorMessage(collaborationError)}`,
+          "error",
+        );
       }
     } catch (error) {
       if (sequence !== requestSequence) return;
@@ -2500,7 +2793,11 @@ replaceInvitationButton.addEventListener("click", () => {
 copyInvitationLinkButton.addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(invitationLink.value);
-    setFeedback(inviteMessage, "Invitation link copied. Send it to your friend.", "success");
+    setFeedback(
+      inviteMessage,
+      "Invitation link copied. Send it to your friend.",
+      "success",
+    );
   } catch (error) {
     console.error("Could not copy the StudySync invitation link:", error);
     setFeedback(
@@ -2566,23 +2863,26 @@ document.addEventListener(
   },
   true,
 );
-window.addEventListener(
-  "studysync-reveal-cloud-answer",
-  (event) => {
-    const question = (event as CustomEvent<CloudQuestionView>).detail;
-    const storedQuestion = cloudQuestions.find((item) => item.id === question?.id);
-    if (!context || !storedQuestion || storedQuestion.user_id !== context.userId) {
-      setFeedback(
-        friendQuestionCreateMessage,
-        "Only the question creator can reveal its expected answer.",
-        "error",
-      );
-      return;
-    }
-    persistExpectedAnswerReveal(question);
-    dispatchCloudQuestions(context, cloudQuestions, cloudAnswers);
-  },
-);
+window.addEventListener("studysync-reveal-cloud-answer", (event) => {
+  const question = (event as CustomEvent<CloudQuestionView>).detail;
+  const storedQuestion = cloudQuestions.find(
+    (item) => item.id === question?.id,
+  );
+  if (
+    !context ||
+    !storedQuestion ||
+    storedQuestion.user_id !== context.userId
+  ) {
+    setFeedback(
+      friendQuestionCreateMessage,
+      "Only the question creator can reveal its expected answer.",
+      "error",
+    );
+    return;
+  }
+  persistExpectedAnswerReveal(question);
+  dispatchCloudQuestions(context, cloudQuestions, cloudAnswers);
+});
 
 supabase.auth.onAuthStateChange((_event, session) => {
   void initializeForSession(session);
