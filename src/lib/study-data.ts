@@ -129,6 +129,16 @@ interface WorkspaceContext {
   userEmail: string | null;
 }
 
+class WorkspaceSelectionRequiredError extends Error {
+  readonly workspaces: WorkspaceRow[];
+
+  constructor(workspaces: WorkspaceRow[]) {
+    super("Choose a workspace to continue.");
+    this.name = "WorkspaceSelectionRequiredError";
+    this.workspaces = workspaces;
+  }
+}
+
 const dailyForm = requireElement("daily-work-form", HTMLFormElement);
 const workType = requireElement("work-type", HTMLSelectElement);
 const taskAssignee = requireElement("work-assignee", HTMLSelectElement);
@@ -819,6 +829,134 @@ function saveWorkspaceSelection(userId: string, workspaceId: string): void {
     localStorage.setItem(workspaceSelectionStorageKey(userId), workspaceId);
   } catch (error) {
     console.error("Could not save the StudySync workspace selection:", error);
+  }
+}
+
+function renderWorkspaceSelection(
+  session: Session,
+  workspaces: WorkspaceRow[],
+): void {
+  document.getElementById("workspace-selection")?.remove();
+
+  const container = document.createElement("div");
+  container.id = "workspace-selection";
+  container.className = "workspace-invitation";
+
+  const message = document.createElement("p");
+  message.className = "placeholder";
+  message.textContent =
+    "This account belongs to multiple confirmed workspaces. Choose which workspace to open.";
+  container.append(message);
+
+  const form = document.createElement("form");
+  form.className = "weekly-goal-form";
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    void confirmWorkspaceSelection(
+      session,
+      select.value,
+      workspaces,
+      form,
+      feedback,
+    );
+  });
+
+  const label = document.createElement("label");
+  label.htmlFor = "workspace-selection-choice";
+  label.textContent = "Workspace";
+
+  const select = document.createElement("select");
+  select.id = "workspace-selection-choice";
+  select.required = true;
+  select.setAttribute("aria-describedby", "workspace-selection-feedback");
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Select a workspace";
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  select.append(placeholder);
+
+  const savedWorkspaceId = readWorkspaceSelection(session.user.id);
+  for (const workspace of workspaces) {
+    const option = document.createElement("option");
+    option.value = workspace.id;
+    option.textContent = `${workspace.name} — ${
+      workspace.owner_id === session.user.id
+        ? "owned by you"
+        : "shared with you"
+    } (${workspace.id.slice(0, 8)})`;
+    option.selected = workspace.id === savedWorkspaceId;
+    select.append(option);
+  }
+
+  label.append(select);
+
+  const button = document.createElement("button");
+  button.type = "submit";
+  button.textContent = "Open workspace";
+
+  form.append(label, button);
+
+  const feedback = document.createElement("p");
+  feedback.id = "workspace-selection-feedback";
+  feedback.className = "weekly-goal-message";
+  feedback.setAttribute("role", "status");
+  feedback.setAttribute("aria-live", "polite");
+
+  container.append(form, feedback);
+  workspaceSyncStatus.insertAdjacentElement("afterend", container);
+}
+
+async function confirmWorkspaceSelection(
+  session: Session,
+  workspaceId: string,
+  workspaces: WorkspaceRow[],
+  form: HTMLFormElement,
+  feedback: HTMLElement,
+): Promise<void> {
+  if (
+    currentSessionUserId !== session.user.id ||
+    !workspaces.some((workspace) => workspace.id === workspaceId)
+  ) {
+    setFeedback(
+      feedback,
+      "That workspace selection is no longer available. Refresh and try again.",
+      "error",
+    );
+    return;
+  }
+
+  const submitButton = form.querySelector<HTMLButtonElement>(
+    'button[type="submit"]',
+  );
+  if (submitButton) submitButton.disabled = true;
+  setFeedback(feedback, "Verifying workspace membership...", "loading");
+
+  try {
+    const { data, error } = await supabase
+      .from("workspace_members")
+      .select("workspace_id")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data || currentSessionUserId !== session.user.id) {
+      throw new Error(
+        "Your membership in that workspace could not be confirmed. Select a workspace you belong to, or ask the project administrator to review access.",
+      );
+    }
+
+    saveWorkspaceSelection(session.user.id, workspaceId);
+    document.getElementById("workspace-selection")?.remove();
+    void initializeForSession(session, workspaceId);
+  } catch (error) {
+    console.error("Could not verify the selected StudySync workspace:", error);
+    setFeedback(
+      feedback,
+      `Could not verify workspace membership. ${authErrorMessage(error)}`,
+      "error",
+    );
+    if (submitButton) submitButton.disabled = false;
   }
 }
 
@@ -2053,6 +2191,7 @@ async function fetchWorkspaceContext(
   userId: string,
   userEmail: string | null,
   acceptedWorkspaceId: string | null = null,
+  requireExplicitSelection = false,
 ): Promise<WorkspaceContext> {
   const { data: memberships, error: membershipError } = await supabase
     .from("workspace_members")
@@ -2076,15 +2215,6 @@ async function fetchWorkspaceContext(
     );
   }
 
-  if (
-    workspaceIds.length > 1 &&
-    !workspaceIds.includes(preferredWorkspaceId ?? "")
-  ) {
-    throw new Error(
-      "This account is a member of multiple StudySync workspaces, but the current page supports one workspace per account. Ask the project administrator to review workspace membership.",
-    );
-  }
-
   let workspace: WorkspaceRow | null = null;
   let visibleMemberships = memberships ?? [];
 
@@ -2096,6 +2226,26 @@ async function fetchWorkspaceContext(
       .order("created_at", { ascending: true });
     if (workspaceError) throw workspaceError;
     const workspaceRows = (workspaces ?? []) as WorkspaceRow[];
+    if (workspaceRows.length !== workspaceIds.length) {
+      throw new Error(
+        "Not all confirmed workspace memberships are visible to this account. Check workspace access and RLS before selecting a workspace.",
+      );
+    }
+    if (
+      acceptedWorkspaceId &&
+      !workspaceRows.some((row) => row.id === acceptedWorkspaceId)
+    ) {
+      throw new Error(
+        "The accepted invitation workspace is not visible to this account. Ask the project administrator to verify workspace access.",
+      );
+    }
+    if (
+      workspaceIds.length > 1 &&
+      (requireExplicitSelection ||
+        !workspaceRows.some((row) => row.id === preferredWorkspaceId))
+    ) {
+      throw new WorkspaceSelectionRequiredError(workspaceRows);
+    }
     const selectedWorkspaceId =
       workspaceIds.length === 1 ? workspaceIds[0] : preferredWorkspaceId;
     workspace =
@@ -2645,7 +2795,10 @@ function clearSignedInData(): void {
   dispatchReviewProgress();
 }
 
-async function initializeForSession(session: Session | null): Promise<void> {
+async function initializeForSession(
+  session: Session | null,
+  selectedWorkspaceId: string | null = null,
+): Promise<void> {
   if (!session) {
     requestSequence += 1;
     currentSessionUserId = null;
@@ -2709,9 +2862,11 @@ async function initializeForSession(session: Session | null): Promise<void> {
       const workspaceContext = await fetchWorkspaceContext(
         session.user.id,
         session.user.email ?? null,
-        acceptedWorkspaceId,
+        acceptedWorkspaceId ?? selectedWorkspaceId,
+        !acceptedWorkspaceId && !selectedWorkspaceId,
       );
       if (sequence !== requestSequence) return;
+      document.getElementById("workspace-selection")?.remove();
       context = workspaceContext;
       updateInvitationControls(workspaceContext);
       syncCollaborationControls(workspaceContext);
@@ -2745,6 +2900,15 @@ async function initializeForSession(session: Session | null): Promise<void> {
       }
     } catch (error) {
       if (sequence !== requestSequence) return;
+      if (error instanceof WorkspaceSelectionRequiredError) {
+        const message = "Select a confirmed workspace to load your study data.";
+        setFeedback(dailyMessage, message, "info");
+        setFeedback(weeklyMessage, message, "info");
+        setFeedback(monthlyMessage, message, "info");
+        setFeedback(workspaceSyncStatus, message, "info");
+        renderWorkspaceSelection(session, error.workspaces);
+        return;
+      }
       console.error("Could not initialize StudySync workspace data:", error);
       const message = authErrorMessage(error);
       setFeedback(dailyMessage, message, "error");
