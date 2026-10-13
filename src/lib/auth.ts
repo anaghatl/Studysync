@@ -1,6 +1,8 @@
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase.ts";
 
+const productionOrigin = "https://studysync-786b.vercel.app";
+
 function requireElement<T extends HTMLElement>(
   id: string,
   elementType: { new (): T },
@@ -14,12 +16,15 @@ function requireElement<T extends HTMLElement>(
 
 const authView = requireElement("auth-view", HTMLElement);
 const studyApp = requireElement("study-app", HTMLElement);
+const emailPanel = requireElement("auth-email-panel", HTMLElement);
 const authForm = requireElement("auth-form", HTMLFormElement);
 const emailInput = requireElement("auth-email", HTMLInputElement);
 const passwordInput = requireElement("auth-password", HTMLInputElement);
 const submitButton = requireElement("auth-submit", HTMLButtonElement);
 const googleButton = requireElement("auth-google", HTMLButtonElement);
+const emailEntryButton = requireElement("auth-email-entry", HTMLButtonElement);
 const modeToggle = requireElement("auth-mode-toggle", HTMLButtonElement);
+const backButton = requireElement("auth-back", HTMLButtonElement);
 const heading = requireElement("auth-heading", HTMLHeadingElement);
 const description = requireElement("auth-description", HTMLElement);
 const formStatus = requireElement("auth-form-status", HTMLElement);
@@ -33,6 +38,17 @@ const hasWorkspaceInvitation = new URLSearchParams(
   window.location.search,
 ).has("invite");
 
+function getOAuthRedirectTo(): string {
+  const currentUrl = new URL(window.location.href);
+  const isLocalDevelopment =
+    currentUrl.hostname === "localhost" ||
+    currentUrl.hostname === "127.0.0.1" ||
+    currentUrl.hostname === "[::1]";
+  const origin = isLocalDevelopment ? currentUrl.origin : productionOrigin;
+
+  return `${origin}${currentUrl.pathname}${currentUrl.search}`;
+}
+
 function setMessage(
   element: HTMLElement,
   message: string,
@@ -40,6 +56,20 @@ function setMessage(
 ): void {
   element.textContent = message;
   element.dataset.state = state;
+}
+
+function showEmailForm(): void {
+  emailPanel.hidden = false;
+  authView.dataset.screen = "email";
+  authView.dataset.statusVisible = "true";
+  emailInput.focus();
+}
+
+function showWelcome(): void {
+  emailPanel.hidden = true;
+  authView.dataset.screen = "welcome";
+  authView.dataset.statusVisible = "false";
+  emailEntryButton.focus();
 }
 
 function setMode(nextMode: "login" | "signup"): void {
@@ -63,6 +93,7 @@ function setMode(nextMode: "login" | "signup"): void {
     : "current-password";
   formStatus.textContent = "";
   delete formStatus.dataset.state;
+  authView.dataset.statusVisible = "false";
 }
 
 function showSession(session: Session | null): void {
@@ -126,11 +157,17 @@ modeToggle.addEventListener("click", () => {
   setMode(mode === "login" ? "signup" : "login");
 });
 
+emailEntryButton.addEventListener("click", showEmailForm);
+backButton.addEventListener("click", showWelcome);
+
 authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   submitButton.disabled = true;
   modeToggle.disabled = true;
   googleButton.disabled = true;
+  emailEntryButton.disabled = true;
+  backButton.disabled = true;
+  authView.dataset.statusVisible = "true";
   setMessage(
     formStatus,
     mode === "signup" ? "Creating your account..." : "Signing in...",
@@ -186,6 +223,8 @@ authForm.addEventListener("submit", async (event) => {
     submitButton.disabled = false;
     modeToggle.disabled = false;
     googleButton.disabled = false;
+    emailEntryButton.disabled = false;
+    backButton.disabled = false;
   }
 });
 
@@ -193,13 +232,15 @@ googleButton.addEventListener("click", async () => {
   submitButton.disabled = true;
   modeToggle.disabled = true;
   googleButton.disabled = true;
+  emailEntryButton.disabled = true;
+  authView.dataset.statusVisible = "true";
   setMessage(formStatus, "Redirecting to Google...", "info");
 
   try {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}${window.location.pathname}${window.location.search}`,
+        redirectTo: getOAuthRedirectTo(),
       },
     });
     if (error) throw error;
@@ -213,6 +254,7 @@ googleButton.addEventListener("click", async () => {
     submitButton.disabled = false;
     modeToggle.disabled = false;
     googleButton.disabled = false;
+    emailEntryButton.disabled = false;
   }
 });
 
@@ -240,6 +282,8 @@ async function restoreSession(): Promise<void> {
   submitButton.disabled = true;
   modeToggle.disabled = true;
   googleButton.disabled = true;
+  emailEntryButton.disabled = true;
+  backButton.disabled = true;
 
   try {
     const { data, error } = await supabase.auth.getSession();
@@ -257,11 +301,14 @@ async function restoreSession(): Promise<void> {
   } catch (error) {
     console.error("Could not restore the StudySync session:", error);
     showSession(null);
+    authView.dataset.statusVisible = "true";
     setMessage(formStatus, readableAuthError(error), "error");
   } finally {
     submitButton.disabled = false;
     modeToggle.disabled = false;
     googleButton.disabled = false;
+    emailEntryButton.disabled = false;
+    backButton.disabled = false;
   }
 }
 

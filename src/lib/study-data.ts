@@ -92,9 +92,21 @@ interface TaskRow {
   user_id: string;
   title: string;
   description: string | null;
+  start_time: string | null;
+  end_time: string | null;
   due_date: string | null;
   status: string;
   created_at: string;
+}
+
+interface DailyTodoItemRow {
+  id: string;
+  workspace_id: string;
+  title: string;
+  completed: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface GoalRow {
@@ -144,6 +156,11 @@ const workType = requireElement("work-type", HTMLSelectElement);
 const taskAssignee = requireElement("work-assignee", HTMLSelectElement);
 const dailyList = requireElement("daily-work-list", HTMLElement);
 const dailyMessage = requireElement("daily-work-message", HTMLElement);
+const dailyTodoForm = requireElement("daily-todo-form", HTMLFormElement);
+const dailyTodoTitle = requireElement("daily-todo-title", HTMLInputElement);
+const dailyTodoAddButton = requireElement("daily-todo-add", HTMLButtonElement);
+const dailyTodoMessage = requireElement("daily-todo-message", HTMLElement);
+const dailyTodoList = requireElement("daily-todo-list", HTMLElement);
 const weeklyForm = requireElement("weekly-goal-form", HTMLFormElement);
 const weeklyAssignee = requireElement("weekly-goal-user", HTMLSelectElement);
 const weeklyUsers = requireElement("weekly-goal-users", HTMLElement);
@@ -156,14 +173,8 @@ const workspaceSyncStatus = requireElement(
   "workspace-sync-status",
   HTMLElement,
 );
-const inviteForm = requireElement("workspace-invite-form", HTMLFormElement);
-const inviteEmail = requireElement("workspace-invite-email", HTMLInputElement);
 const inviteMessage = requireElement("workspace-invite-message", HTMLElement);
 const invitePanel = requireElement("workspace-invite-panel", HTMLElement);
-const replaceInvitationButton = requireElement(
-  "workspace-replace-invitation",
-  HTMLButtonElement,
-);
 const invitationStatus = requireElement(
   "workspace-invitation-status",
   HTMLElement,
@@ -171,18 +182,6 @@ const invitationStatus = requireElement(
 const connectedMember = requireElement(
   "workspace-connected-member",
   HTMLElement,
-);
-const invitationLinkContainer = requireElement(
-  "workspace-invitation-link-container",
-  HTMLElement,
-);
-const invitationLink = requireElement(
-  "workspace-invitation-link",
-  HTMLInputElement,
-);
-const copyInvitationLinkButton = requireElement(
-  "workspace-copy-invitation-link",
-  HTMLButtonElement,
 );
 const friendQuestionForm = requireElement(
   "friend-question-form",
@@ -227,14 +226,19 @@ const monthlyStorageKey = "studysync-monthly-goals";
 
 let context: WorkspaceContext | null = null;
 let tasks: TaskRow[] = [];
+let dailyTodoItems: DailyTodoItemRow[] = [];
 let goals: GoalRow[] = [];
+let taskTimeColumnsAvailable: boolean | null = null;
 let requestSequence = 0;
 let currentSessionUserId: string | null = null;
 let initializingUserId: string | null = null;
 let initializationPromise: Promise<void> | null = null;
 let goalDescriptions: Record<string, string> = {};
 let workspaceSyncChannel: RealtimeChannel | null = null;
+let dailyTodoSyncChannel: RealtimeChannel | null = null;
+let dailyTodoWorkspaceId: string | null = null;
 let realtimeRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+let dailyTodoRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 let cloudQuestions: QuestionRow[] = [];
 let cloudAnswers: AnswerRow[] = [];
 let cloudReviews: ReviewRow[] = [];
@@ -262,6 +266,9 @@ function setFeedback(
 }
 
 function authErrorMessage(error: unknown): string {
+  if (isMissingTaskTimeColumnError(error)) {
+    return "Task times are not available because public.tasks is missing start_time and/or end_time. Apply the task time-column SQL migration in Supabase to use scheduled tasks.";
+  }
   if (
     error instanceof TypeError ||
     (error instanceof Error && /network|fetch|timeout/i.test(error.message))
@@ -271,6 +278,35 @@ function authErrorMessage(error: unknown): string {
   return error instanceof Error
     ? error.message
     : "Could not load or save your study data. Please try again.";
+}
+
+function isMissingTaskTimeColumnError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return false;
+  }
+
+  const code = error.code;
+  if (code !== "42703" && code !== "PGRST204") return false;
+
+  const details: string[] = [];
+  if ("message" in error && typeof error.message === "string") {
+    details.push(error.message);
+  }
+  if ("details" in error && typeof error.details === "string") {
+    details.push(error.details);
+  }
+  if ("hint" in error && typeof error.hint === "string") {
+    details.push(error.hint);
+  }
+  const description = details.join(" ");
+
+  return (
+    /start_time|end_time/i.test(description) &&
+    /does not exist|could not find|schema cache|undefined column/i.test(
+      description,
+    ) &&
+    (/tasks|schema cache/i.test(description) || /42703/.test(String(code)))
+  );
 }
 
 function userLabel(userId: string): UserLabel | null {
@@ -412,6 +448,62 @@ function appendText(parent: HTMLElement, text: string): void {
   parent.append(line);
 }
 
+interface ParsedTaskTime {
+  value: string;
+  minutes: number;
+}
+
+function parseTaskTime(value: string): ParsedTaskTime | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const twentyFourHourMatch = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(trimmed);
+  if (twentyFourHourMatch) {
+    const hour = Number(twentyFourHourMatch[1]);
+    const minute = Number(twentyFourHourMatch[2]);
+    return {
+      value: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`,
+      minutes: hour * 60 + minute,
+    };
+  }
+
+  const twelveHourMatch =
+    /^(\d{1,2})(?:(?::|\s+)([0-5]\d))?\s*([AP])\.?M\.?$/i.exec(trimmed);
+  if (!twelveHourMatch) return null;
+
+  const hour = Number(twelveHourMatch[1]);
+  const minute = Number(twelveHourMatch[2] ?? "0");
+  if (hour < 1 || hour > 12) return null;
+  const isAfternoon = twelveHourMatch[3].toUpperCase() === "P";
+  const hour24 = (hour % 12) + (isAfternoon ? 12 : 0);
+  return {
+    value: `${String(hour24).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`,
+    minutes: hour24 * 60 + minute,
+  };
+}
+
+function taskTimeRangeError(startTime: string, endTime: string): string | null {
+  const start = startTime ? parseTaskTime(startTime) : null;
+  const end = endTime ? parseTaskTime(endTime) : null;
+  if ((startTime && !start) || (endTime && !end)) {
+    return "Please enter a time such as 5 30 am, 5:30 PM, 7 PM, or 17:30.";
+  }
+  if (start && end && end.minutes <= start.minutes) {
+    return "The end time must be later than the start time.";
+  }
+  return null;
+}
+
+function formatTaskTime(value: string): string {
+  const parsed = parseTaskTime(value.slice(0, 5));
+  if (!parsed) return value;
+  const [hourString, minuteString] = parsed.value.split(":");
+  const hour = Number(hourString);
+  const period = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${minuteString} ${period}`;
+}
+
 function renderDailyWork(): void {
   dailyList.replaceChildren();
   const cloudEntries = tasks.map(
@@ -445,13 +537,27 @@ function renderDailyWork(): void {
       entry.type === "task" && entry.completed ? " is-complete" : ""
     }`;
     const heading = document.createElement("h4");
-    heading.textContent = `${entry.type === "task" ? "Task" : entry.type === "lecture" ? "Lecture" : "Problems Solved"}: ${
-      entry.type === "problems" ? entry.topic : entry.title
-    }`;
+    heading.textContent =
+      entry.type === "task"
+        ? entry.title
+        : `${entry.type === "lecture" ? "Lecture" : "Problems Solved"}: ${
+            entry.type === "problems" ? entry.topic : entry.title
+          }`;
     card.append(heading);
     appendText(card, `Assigned to ${entry.assignee}`);
 
-    if (entry.type === "task" && tasks.some((task) => task.id === entry.id)) {
+    const task =
+      entry.type === "task"
+        ? tasks.find((item) => item.id === entry.id)
+        : undefined;
+    if (task?.start_time && task.end_time) {
+      appendText(
+        card,
+        `Time: ${formatTaskTime(task.start_time)} – ${formatTaskTime(task.end_time)}`,
+      );
+    }
+
+    if (task) {
       if (entry.description) appendText(card, entry.description);
       appendText(
         card,
@@ -493,7 +599,6 @@ function renderDailyWork(): void {
       button.addEventListener("click", () => {
         void updateTaskStatus(entry.id, !entry.completed);
       });
-      const task = tasks.find((item) => item.id === entry.id);
       if (task) {
         const editButton = document.createElement("button");
         editButton.className = "shared-record-action";
@@ -516,6 +621,341 @@ function renderDailyWork(): void {
       card.append(actions);
     }
     dailyList.append(card);
+  }
+}
+
+function canManageDailyTodo(): boolean {
+  return currentUserLabel() === "User 2" && context?.members.length === 2;
+}
+
+function renderDailyTodoItems(): void {
+  dailyTodoList.replaceChildren();
+  const canManage = canManageDailyTodo();
+  dailyTodoAddButton.disabled = !canManage;
+  dailyTodoTitle.disabled = !canManage;
+
+  if (!dailyTodoItems.length) {
+    const empty = document.createElement("p");
+    empty.className = "daily-work-empty";
+    empty.textContent = "No daily to-do items yet.";
+    dailyTodoList.append(empty);
+    return;
+  }
+
+  for (const item of dailyTodoItems) {
+    const card = document.createElement("article");
+    card.className = `daily-todo-item${item.completed ? " is-complete" : ""}`;
+
+    const title = document.createElement("span");
+    title.className = "daily-todo-item-title";
+    title.textContent = item.title;
+    card.append(title);
+
+    const actions = document.createElement("div");
+    actions.className = "daily-todo-actions";
+    const toggleButton = document.createElement("button");
+    toggleButton.type = "button";
+    toggleButton.textContent = item.completed
+      ? "Mark incomplete"
+      : "Mark complete";
+    toggleButton.setAttribute("aria-pressed", String(item.completed));
+    toggleButton.addEventListener("click", () => {
+      void setDailyTodoCompletion(item, !item.completed);
+    });
+    actions.append(toggleButton);
+
+    if (canManage) {
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.textContent = "Edit";
+      editButton.addEventListener("click", () => {
+        void editDailyTodoItem(item);
+      });
+
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "daily-todo-delete";
+      deleteButton.type = "button";
+      deleteButton.textContent = "Delete";
+      deleteButton.addEventListener("click", () => {
+        void deleteDailyTodoItem(item);
+      });
+      actions.append(editButton, deleteButton);
+    }
+
+    card.append(actions);
+    dailyTodoList.append(card);
+  }
+}
+
+function isMissingDailyTodoTableError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return false;
+  }
+  const code = error.code;
+  if (code !== "42P01" && code !== "PGRST205") return false;
+  const details =
+    "message" in error && typeof error.message === "string"
+      ? error.message
+      : "";
+  return /daily_todo_items/i.test(details);
+}
+
+async function loadDailyTodoItems(
+  activeContext: WorkspaceContext | null = context,
+): Promise<boolean> {
+  if (!activeContext) return false;
+  const { data, error } = await supabase
+    .from("daily_todo_items")
+    .select("id,workspace_id,title,completed,created_by,created_at,updated_at")
+    .eq("workspace_id", activeContext.workspace.id)
+    .order("created_at", { ascending: true });
+
+  if (context !== activeContext) return false;
+  if (error) {
+    dailyTodoItems = [];
+    dailyTodoList.replaceChildren();
+    console.error("Could not load shared Daily To-Do items:", error);
+    if (isMissingDailyTodoTableError(error)) {
+      setFeedback(
+        dailyTodoMessage,
+        "The Daily To-Do List is not set up in Supabase yet. Apply its migration to enable the shared list.",
+        "error",
+      );
+    } else {
+      setFeedback(
+        dailyTodoMessage,
+        `Could not load the shared Daily To-Do List. ${authErrorMessage(error)}`,
+        "error",
+      );
+    }
+    dailyTodoAddButton.disabled = true;
+    dailyTodoTitle.disabled = true;
+    return false;
+  }
+
+  dailyTodoItems = (data ?? []) as DailyTodoItemRow[];
+  renderDailyTodoItems();
+  setFeedback(
+    dailyTodoMessage,
+    activeContext.members.length < 2
+      ? "The shared list is available. User 2 management is enabled when a second member joins."
+      : canManageDailyTodo()
+        ? "User 2 can add, edit, and delete items. Both members can update completion."
+        : "Only User 2 can add, edit, or delete items. Both members can update completion.",
+    "info",
+  );
+  startDailyTodoSync(activeContext.workspace.id);
+  return true;
+}
+
+async function refreshDailyTodoFromRealtime(): Promise<void> {
+  if (dailyTodoRefreshTimer !== null) return;
+  dailyTodoRefreshTimer = setTimeout(() => {
+    dailyTodoRefreshTimer = null;
+    void loadDailyTodoItems();
+  }, 150);
+}
+
+function startDailyTodoSync(workspaceId: string): void {
+  if (dailyTodoSyncChannel) {
+    if (dailyTodoWorkspaceId === workspaceId) return;
+    void supabase.removeChannel(dailyTodoSyncChannel);
+    dailyTodoSyncChannel = null;
+  }
+
+  const channel = supabase
+    .channel(`studysync-daily-todo-${workspaceId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "daily_todo_items",
+      },
+      (payload) => {
+        const changedRow =
+          payload.eventType === "DELETE" ? payload.old : payload.new;
+        if (changedRow.workspace_id === workspaceId) {
+          void refreshDailyTodoFromRealtime();
+        }
+      },
+    )
+    .subscribe((status, error) => {
+      if (dailyTodoSyncChannel !== channel) return;
+      if (
+        status === "CHANNEL_ERROR" ||
+        status === "TIMED_OUT" ||
+        status === "CLOSED"
+      ) {
+        dailyTodoSyncChannel = null;
+        dailyTodoWorkspaceId = null;
+        if (error) {
+          console.error("StudySync Daily To-Do Realtime sync failed:", error);
+        }
+        setFeedback(
+          dailyTodoMessage,
+          "Live Daily To-Do updates are unavailable. Enable Realtime for daily_todo_items in Supabase; the list can still be refreshed manually.",
+          "error",
+        );
+      }
+    });
+  dailyTodoSyncChannel = channel;
+  dailyTodoWorkspaceId = workspaceId;
+}
+
+async function submitDailyTodoItem(event: SubmitEvent): Promise<void> {
+  event.preventDefault();
+  const activeContext = context;
+  if (!activeContext || !canManageDailyTodo()) {
+    setFeedback(
+      dailyTodoMessage,
+      "Only User 2 can add items, and only after both workspace members are confirmed.",
+      "error",
+    );
+    return;
+  }
+
+  const title = dailyTodoTitle.value.trim();
+  if (!title) {
+    setFeedback(dailyTodoMessage, "Enter a to-do item.", "error");
+    return;
+  }
+
+  dailyTodoAddButton.disabled = true;
+  setFeedback(dailyTodoMessage, "Adding item...", "loading");
+  try {
+    const { error } = await supabase.from("daily_todo_items").insert({
+      workspace_id: activeContext.workspace.id,
+      title,
+      created_by: activeContext.userId,
+    });
+    if (error) throw error;
+    dailyTodoForm.reset();
+    const refreshed = await loadDailyTodoItems(activeContext);
+    setFeedback(
+      dailyTodoMessage,
+      refreshed
+        ? "To-do item added."
+        : "The item was added, but the list could not refresh. Reload the page to verify it.",
+      refreshed ? "success" : "error",
+    );
+  } catch (error) {
+    console.error("Could not add shared Daily To-Do item:", error);
+    setFeedback(dailyTodoMessage, authErrorMessage(error), "error");
+  } finally {
+    dailyTodoAddButton.disabled = !canManageDailyTodo();
+  }
+}
+
+async function editDailyTodoItem(item: DailyTodoItemRow): Promise<void> {
+  const activeContext = context;
+  if (!activeContext || !canManageDailyTodo()) {
+    setFeedback(dailyTodoMessage, "Only User 2 can edit to-do items.", "error");
+    return;
+  }
+
+  const title = window.prompt("Edit to-do item", item.title);
+  if (title === null) return;
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle) {
+    setFeedback(dailyTodoMessage, "A to-do item cannot be empty.", "error");
+    return;
+  }
+  try {
+    const { error } = await supabase
+      .from("daily_todo_items")
+      .update({ title: trimmedTitle })
+      .eq("id", item.id)
+      .eq("workspace_id", activeContext.workspace.id)
+      .select("id")
+      .single();
+    if (error) throw error;
+    const refreshed = await loadDailyTodoItems(activeContext);
+    setFeedback(
+      dailyTodoMessage,
+      refreshed
+        ? "To-do item updated."
+        : "The item was updated, but the list could not refresh. Reload the page to verify it.",
+      refreshed ? "success" : "error",
+    );
+  } catch (error) {
+    console.error("Could not edit shared Daily To-Do item:", error);
+    setFeedback(dailyTodoMessage, authErrorMessage(error), "error");
+  }
+}
+
+async function deleteDailyTodoItem(item: DailyTodoItemRow): Promise<void> {
+  const activeContext = context;
+  if (!activeContext || !canManageDailyTodo()) {
+    setFeedback(
+      dailyTodoMessage,
+      "Only User 2 can delete to-do items.",
+      "error",
+    );
+    return;
+  }
+  if (!window.confirm(`Delete the to-do item "${item.title}"?`)) return;
+
+  try {
+    const { error } = await supabase
+      .from("daily_todo_items")
+      .delete()
+      .eq("id", item.id)
+      .eq("workspace_id", activeContext.workspace.id)
+      .select("id")
+      .single();
+    if (error) throw error;
+    const refreshed = await loadDailyTodoItems(activeContext);
+    setFeedback(
+      dailyTodoMessage,
+      refreshed
+        ? "To-do item deleted."
+        : "The item was deleted, but the list could not refresh. Reload the page to verify it.",
+      refreshed ? "success" : "error",
+    );
+  } catch (error) {
+    console.error("Could not delete shared Daily To-Do item:", error);
+    setFeedback(dailyTodoMessage, authErrorMessage(error), "error");
+  }
+}
+
+async function setDailyTodoCompletion(
+  item: DailyTodoItemRow,
+  completed: boolean,
+): Promise<void> {
+  const activeContext = context;
+  if (
+    !activeContext ||
+    !activeContext.members.some(
+      (member) => member.user_id === activeContext.userId,
+    )
+  ) {
+    setFeedback(
+      dailyTodoMessage,
+      "A confirmed workspace membership is required to update completion.",
+      "error",
+    );
+    return;
+  }
+
+  setFeedback(dailyTodoMessage, "Updating item...", "loading");
+  try {
+    const { error } = await supabase.rpc("set_daily_todo_item_completed", {
+      p_item_id: item.id,
+      p_completed: completed,
+    });
+    if (error) throw error;
+    const refreshed = await loadDailyTodoItems(activeContext);
+    setFeedback(
+      dailyTodoMessage,
+      refreshed
+        ? "To-do completion updated."
+        : "Completion was updated, but the list could not refresh. Reload the page to verify it.",
+      refreshed ? "success" : "error",
+    );
+  } catch (error) {
+    console.error("Could not update shared Daily To-Do completion:", error);
+    setFeedback(dailyTodoMessage, authErrorMessage(error), "error");
   }
 }
 
@@ -791,15 +1231,6 @@ async function acceptWorkspaceInvitation(
   return data;
 }
 
-interface StoredWorkspaceInvitation {
-  id: string;
-  email: string;
-}
-
-function invitationStorageKey(workspaceContext: WorkspaceContext): string {
-  return `studysync-workspace-invitation:${workspaceContext.workspace.id}:${workspaceContext.userId}`;
-}
-
 function workspaceSelectionStorageKey(userId: string): string {
   return `studysync-active-workspace:${userId}`;
 }
@@ -960,257 +1391,65 @@ async function confirmWorkspaceSelection(
   }
 }
 
-function readStoredInvitation(
-  workspaceContext: WorkspaceContext,
-): StoredWorkspaceInvitation | null {
-  try {
-    const stored = localStorage.getItem(invitationStorageKey(workspaceContext));
-    if (!stored) return null;
-    const parsed: unknown = JSON.parse(stored);
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "id" in parsed &&
-      typeof parsed.id === "string" &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        parsed.id,
-      ) &&
-      "email" in parsed &&
-      typeof parsed.email === "string"
-    ) {
-      return { id: parsed.id, email: parsed.email };
-    }
-    throw new Error("Stored workspace invitation details are invalid.");
-  } catch (error) {
-    console.error("Could not restore the saved workspace invitation:", error);
-    return null;
-  }
-}
-
-function invitationUrl(invitationId: string): string {
-  const linkUrl = new URL(window.location.href);
-  linkUrl.searchParams.set("invite", invitationId);
-  return linkUrl.toString();
-}
-
 function updateInvitationControls(workspaceContext: WorkspaceContext): void {
   const isOwner =
     workspaceContext.workspace.owner_id === workspaceContext.userId;
   invitePanel.hidden = false;
-  replaceInvitationButton.hidden = true;
-  inviteForm.hidden = false;
-  invitationLinkContainer.hidden = true;
   connectedMember.textContent = "";
   invitationStatus.textContent = "";
-  invitationStatus.dataset.state = "info";
-  invitationLink.value = "";
 
   if (workspaceContext.members.length >= 2) {
-    inviteForm.hidden = true;
-    replaceInvitationButton.hidden = true;
     invitationStatus.textContent = "Connected · 2 of 2 members";
     invitationStatus.dataset.state = "success";
     connectedMember.textContent = isOwner
       ? "Supabase confirms a second member. Their email is not available under the current access policies."
       : `Supabase confirms your membership. Signed in as ${workspaceContext.userEmail ?? "your account"}.`;
-    setFeedback(
-      inviteMessage,
-      "This workspace already has two members. No further invitations can be sent.",
-      "info",
-    );
-    clearStoredInvitation(workspaceContext);
+    inviteMessage.textContent = "";
     return;
   }
 
   if (!isOwner) {
-    inviteForm.hidden = true;
     invitationStatus.textContent = "Membership verified · 1 of 2 visible";
     invitationStatus.dataset.state = "success";
     connectedMember.textContent = workspaceContext.userEmail
       ? `Supabase confirms your membership. Signed in as ${workspaceContext.userEmail}.`
-      : "Supabase confirms your membership. Invite controls are available to the workspace owner.";
+      : "Supabase confirms your membership in this workspace.";
     inviteMessage.textContent = "";
     return;
   }
 
   if (workspaceContext.members.length !== 1) {
-    inviteForm.hidden = true;
     invitationStatus.textContent = "Membership status unavailable";
     invitationStatus.dataset.state = "error";
     setFeedback(
       inviteMessage,
-      "Invitations are available only when you are the workspace's sole member.",
+      "Workspace membership could not be confirmed.",
       "error",
     );
     return;
   }
 
-  inviteForm.hidden = false;
-  const storedInvitation = readStoredInvitation(workspaceContext);
-  if (storedInvitation) {
-    inviteEmail.value = storedInvitation.email;
-    invitationLink.value = invitationUrl(storedInvitation.id);
-    invitationLinkContainer.hidden = false;
-    inviteForm.hidden = true;
-    replaceInvitationButton.hidden = false;
-    invitationStatus.textContent = "Invitation issued · acceptance unconfirmed";
-    invitationStatus.dataset.state = "info";
-    connectedMember.textContent =
-      "Supabase currently confirms only your membership (1 of 2). The available functions cannot verify whether this invitation has expired or been accepted.";
-    setFeedback(
-      inviteMessage,
-      "The saved link is ready to share. A second member will be confirmed from Supabase membership.",
-      "info",
-    );
-    return;
-  }
   invitationStatus.textContent = "No second member confirmed · 1 of 2";
   invitationStatus.dataset.state = "info";
   connectedMember.textContent =
-    "No invitation link is saved in this browser. This does not confirm whether an invitation was previously created; the available functions cannot retrieve its ID or link.";
-  setFeedback(
-    inviteMessage,
-    "If you still have a previously copied link, send that to your friend. Otherwise, you can try creating an invitation; Supabase will reject a duplicate active invitation, but this page cannot recover that invitation's link.",
-    "info",
-  );
-}
-
-function clearStoredInvitation(workspaceContext: WorkspaceContext): void {
-  try {
-    localStorage.removeItem(invitationStorageKey(workspaceContext));
-  } catch (error) {
-    console.error("Could not clear the saved workspace invitation:", error);
-  }
-}
-
-async function createWorkspaceInvitation(): Promise<void> {
-  if (!context || context.workspace.owner_id !== context.userId) {
-    setFeedback(
-      inviteMessage,
-      "Only the workspace owner can invite a friend.",
-      "error",
-    );
-    return;
-  }
-  if (context.members.length !== 1) {
-    setFeedback(
-      inviteMessage,
-      "Invitations are available only when you are the workspace's sole member.",
-      "error",
-    );
-    return;
-  }
-
-  const email = inviteEmail.value.trim();
-  if (!email) {
-    setFeedback(
-      inviteMessage,
-      "Enter your friend's registered email address.",
-      "error",
-    );
-    return;
-  }
-
-  const submitButton = inviteForm.querySelector<HTMLButtonElement>(
-    'button[type="submit"]',
-  );
-  if (submitButton) submitButton.disabled = true;
-  setFeedback(
-    inviteMessage,
-    "Creating a secure workspace invitation...",
-    "loading",
-  );
-  invitationLinkContainer.hidden = true;
-
-  try {
-    const { data, error } = await supabase.rpc("invite_workspace_member", {
-      target_workspace: context.workspace.id,
-      invited_email: email,
-    });
-    if (error) throw error;
-    if (
-      typeof data !== "string" ||
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        data,
-      )
-    ) {
-      throw new Error(
-        "Supabase returned an invalid invitation ID. The invitation status cannot be confirmed; contact the project administrator before retrying.",
-      );
-    }
-
-    invitationLink.value = invitationUrl(data);
-    invitationLinkContainer.hidden = false;
-    invitationStatus.textContent = "Invitation issued · acceptance unconfirmed";
-    invitationStatus.dataset.state = "info";
-    connectedMember.textContent = `Supabase confirms 1 of 2 members. The invitation was created for ${email}; acceptance and expiry cannot be checked with the available functions.`;
-    inviteEmail.value = "";
-    inviteForm.hidden = true;
-    replaceInvitationButton.hidden = false;
-    try {
-      localStorage.setItem(
-        invitationStorageKey(context),
-        JSON.stringify({ id: data, email }),
-      );
-    } catch (storageError) {
-      console.error(
-        "Could not save the workspace invitation link locally:",
-        storageError,
-      );
-      replaceInvitationButton.hidden = false;
-      setFeedback(
-        inviteMessage,
-        "Invitation created, but this browser could not retain the link. Copy it now and send it to your friend.",
-        "success",
-      );
-      return;
-    }
-    setFeedback(
-      inviteMessage,
-      "Invitation created. Copy and send the link to your friend. They must sign in with the invited email address. Membership will show as connected only after Supabase confirms the second member.",
-      "success",
-    );
-  } catch (error) {
-    console.error(
-      "Could not create the StudySync workspace invitation:",
-      error,
-    );
-    const storedInvitation = readStoredInvitation(context);
-    const hasActiveInvitation =
-      error instanceof Error &&
-      error.message.toLowerCase().includes("already has an active invitation");
-    if (hasActiveInvitation) {
-      inviteForm.hidden = true;
-      replaceInvitationButton.hidden = true;
-      invitationStatus.textContent =
-        "Active invitation exists · acceptance unconfirmed";
-      invitationStatus.dataset.state = "info";
-      if (storedInvitation) {
-        invitationLink.value = invitationUrl(storedInvitation.id);
-        invitationLinkContainer.hidden = false;
-      } else {
-        invitationLinkContainer.hidden = true;
-      }
-    }
-    setFeedback(
-      inviteMessage,
-      hasActiveInvitation && !storedInvitation
-        ? "Supabase reports an active invitation, but this browser has no saved link. Check any previously copied link or the browser where it was created; this page cannot retrieve it, so no further creation attempt is available."
-        : invitationErrorMessage(error),
-      "error",
-    );
-  } finally {
-    if (submitButton) submitButton.disabled = false;
-  }
+    "Supabase currently confirms only your membership in this workspace.";
 }
 
 function stopWorkspaceSync(): void {
   const channel = workspaceSyncChannel;
   workspaceSyncChannel = null;
   if (channel) void supabase.removeChannel(channel);
+  const todoChannel = dailyTodoSyncChannel;
+  dailyTodoSyncChannel = null;
+  dailyTodoWorkspaceId = null;
+  if (todoChannel) void supabase.removeChannel(todoChannel);
   if (realtimeRefreshTimer !== null) {
     clearTimeout(realtimeRefreshTimer);
     realtimeRefreshTimer = null;
+  }
+  if (dailyTodoRefreshTimer !== null) {
+    clearTimeout(dailyTodoRefreshTimer);
+    dailyTodoRefreshTimer = null;
   }
   if (collaborationRefreshTimer !== null) {
     clearTimeout(collaborationRefreshTimer);
@@ -2335,28 +2574,53 @@ async function loadRecords(): Promise<void> {
     "loading",
   );
 
-  const [
-    { data: taskRows, error: tasksError },
-    { data: goalRows, error: goalsError },
-  ] = await Promise.all([
-    supabase
+  const [taskResult, { data: goalRows, error: goalsError }] = await Promise.all(
+    [
+      supabase
+        .from("tasks")
+        .select(
+          "id,workspace_id,user_id,title,description,start_time,end_time,due_date,status,created_at",
+        )
+        .eq("workspace_id", activeContext.workspace.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("goals")
+        .select(
+          "id,workspace_id,user_id,title,period,start_date,end_date,status",
+        )
+        .eq("workspace_id", activeContext.workspace.id)
+        .order("start_date", { ascending: false }),
+    ],
+  );
+  if (goalsError) throw goalsError;
+
+  let taskRows: TaskRow[];
+  if (taskResult.error) {
+    if (!isMissingTaskTimeColumnError(taskResult.error)) {
+      throw taskResult.error;
+    }
+
+    taskTimeColumnsAvailable = false;
+    const { data: legacyTaskRows, error: legacyTasksError } = await supabase
       .from("tasks")
       .select(
         "id,workspace_id,user_id,title,description,due_date,status,created_at",
       )
       .eq("workspace_id", activeContext.workspace.id)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("goals")
-      .select("id,workspace_id,user_id,title,period,start_date,end_date,status")
-      .eq("workspace_id", activeContext.workspace.id)
-      .order("start_date", { ascending: false }),
-  ]);
-  if (tasksError) throw tasksError;
-  if (goalsError) throw goalsError;
+      .order("created_at", { ascending: false });
+    if (legacyTasksError) throw legacyTasksError;
+    taskRows = (legacyTaskRows ?? []).map((task) => ({
+      ...task,
+      start_time: null,
+      end_time: null,
+    }));
+  } else {
+    taskTimeColumnsAvailable = true;
+    taskRows = (taskResult.data ?? []) as TaskRow[];
+  }
   if (context !== activeContext) return;
 
-  tasks = (taskRows ?? []) as TaskRow[];
+  tasks = taskRows;
   goals = (goalRows ?? []) as GoalRow[];
   loadGoalDescriptions();
   renderAll();
@@ -2368,8 +2632,10 @@ async function loadRecords(): Promise<void> {
   );
   setFeedback(
     dailyMessage,
-    `${tasks.length ? "" : "No cloud tasks yet."}${legacyTaskNotice}`.trim(),
-    "info",
+    taskTimeColumnsAvailable === false
+      ? `Task records loaded, but time slots are unavailable until the Supabase task time-column migration is applied.${legacyTaskNotice}`
+      : `${tasks.length ? "" : "No cloud tasks yet."}${legacyTaskNotice}`.trim(),
+    taskTimeColumnsAvailable === false ? "error" : "info",
   );
   setFeedback(
     weeklyMessage,
@@ -2381,6 +2647,7 @@ async function loadRecords(): Promise<void> {
     `${goals.some((goal) => goal.period === "monthly") ? "" : "No monthly goals yet."}${legacyNotice(monthlyStorageKey, "monthly goal")}`,
     "info",
   );
+  await loadDailyTodoItems(activeContext);
 }
 
 async function updateTaskStatus(
@@ -2391,7 +2658,7 @@ async function updateTaskStatus(
   setFeedback(dailyMessage, "Updating task...", "loading");
   const { error } = await supabase
     .from("tasks")
-    .update({ status: completed ? "completed" : "incomplete" })
+    .update({ status: completed ? "completed" : "pending" })
     .eq("id", taskId)
     .eq("workspace_id", context.workspace.id)
     .select("id")
@@ -2422,18 +2689,73 @@ async function editTask(task: TaskRow): Promise<void> {
     task.description ?? "",
   );
   if (description === null) return;
+  const startTime = window.prompt(
+    "Edit start time (24-hour HH:MM, or leave blank)",
+    task.start_time?.slice(0, 5) ?? "",
+  );
+  if (startTime === null) return;
+  const endTime = window.prompt(
+    "Edit end time (24-hour HH:MM, or leave blank)",
+    task.end_time?.slice(0, 5) ?? "",
+  );
+  if (endTime === null) return;
+
+  const trimmedStartTime = startTime.trim();
+  const trimmedEndTime = endTime.trim();
+  const timeError = taskTimeRangeError(trimmedStartTime, trimmedEndTime);
+  if (timeError) {
+    setFeedback(dailyMessage, timeError, "error");
+    return;
+  }
+  const parsedStartTime = trimmedStartTime
+    ? parseTaskTime(trimmedStartTime)?.value
+    : null;
+  const parsedEndTime = trimmedEndTime
+    ? parseTaskTime(trimmedEndTime)?.value
+    : null;
+  if (
+    taskTimeColumnsAvailable === false &&
+    (parsedStartTime !== null || parsedEndTime !== null)
+  ) {
+    setFeedback(
+      dailyMessage,
+      "Task times cannot be saved until the Supabase task time-column migration is applied. Clear both times to save the activity without a schedule.",
+      "error",
+    );
+    return;
+  }
 
   setFeedback(dailyMessage, "Saving task changes...", "loading");
-  const { error } = await supabase
+  let { error } = await supabase
     .from("tasks")
     .update({
       title: trimmedTitle,
       description: description.trim() || null,
+      start_time: parsedStartTime ?? null,
+      end_time: parsedEndTime ?? null,
     })
     .eq("id", task.id)
     .eq("workspace_id", context.workspace.id)
     .select("id")
     .single();
+  if (error && isMissingTaskTimeColumnError(error)) {
+    taskTimeColumnsAvailable = false;
+    if (parsedStartTime !== null || parsedEndTime !== null) {
+      setFeedback(dailyMessage, authErrorMessage(error), "error");
+      return;
+    }
+    const fallbackResult = await supabase
+      .from("tasks")
+      .update({
+        title: trimmedTitle,
+        description: description.trim() || null,
+      })
+      .eq("id", task.id)
+      .eq("workspace_id", context.workspace.id)
+      .select("id")
+      .single();
+    error = fallbackResult.error;
+  }
   if (error) {
     setFeedback(dailyMessage, authErrorMessage(error), "error");
     return;
@@ -2442,8 +2764,10 @@ async function editTask(task: TaskRow): Promise<void> {
     await loadRecords();
     setFeedback(
       dailyMessage,
-      "Task updated in the shared workspace.",
-      "success",
+      taskTimeColumnsAvailable === false
+        ? "Task updated in the shared workspace. Time slots remain unavailable until the Supabase task time-column migration is applied."
+        : "Task updated in the shared workspace.",
+      taskTimeColumnsAvailable === false ? "error" : "success",
     );
   } catch (loadError) {
     setFeedback(dailyMessage, authErrorMessage(loadError), "error");
@@ -2497,19 +2821,61 @@ async function createTask(formData: FormData): Promise<void> {
   }
   const title = readFormText(formData, "title");
   const description = readFormText(formData, "description");
+  const startTime = readFormText(formData, "start_time");
+  const endTime = readFormText(formData, "end_time");
   if (!title) {
-    setFeedback(dailyMessage, "Please enter a task title.", "error");
+    setFeedback(dailyMessage, "Please enter an activity name.", "error");
+    return;
+  }
+  const timeError = taskTimeRangeError(startTime, endTime);
+  if (timeError) {
+    setFeedback(dailyMessage, timeError, "error");
+    return;
+  }
+  const parsedStartTime = startTime ? parseTaskTime(startTime)?.value : null;
+  const parsedEndTime = endTime ? parseTaskTime(endTime)?.value : null;
+  if (
+    taskTimeColumnsAvailable === false &&
+    (parsedStartTime !== null || parsedEndTime !== null)
+  ) {
+    setFeedback(
+      dailyMessage,
+      "Task times cannot be saved until the Supabase task time-column migration is applied. Clear both times to save this activity without a schedule.",
+      "error",
+    );
     return;
   }
 
   setFeedback(dailyMessage, "Saving task to Supabase...", "loading");
-  const { error } = await supabase.from("tasks").insert({
+  const taskValues = {
     workspace_id: context.workspace.id,
     user_id: context.userId,
     title,
     description: description || null,
-    status: "incomplete",
-  });
+    ...(taskTimeColumnsAvailable === false
+      ? {}
+      : {
+          start_time: parsedStartTime ?? null,
+          end_time: parsedEndTime ?? null,
+        }),
+    status: "pending",
+  };
+  let { error } = await supabase.from("tasks").insert(taskValues);
+  if (error && isMissingTaskTimeColumnError(error)) {
+    taskTimeColumnsAvailable = false;
+    if (parsedStartTime !== null || parsedEndTime !== null) {
+      setFeedback(dailyMessage, authErrorMessage(error), "error");
+      return;
+    }
+    const fallbackResult = await supabase.from("tasks").insert({
+      workspace_id: context.workspace.id,
+      user_id: context.userId,
+      title,
+      description: description || null,
+      status: "pending",
+    });
+    error = fallbackResult.error;
+  }
   if (error) {
     setFeedback(dailyMessage, authErrorMessage(error), "error");
     return;
@@ -2518,7 +2884,13 @@ async function createTask(formData: FormData): Promise<void> {
   setTaskAssignmentRules();
   try {
     await loadRecords();
-    setFeedback(dailyMessage, "Task saved to the shared workspace.", "success");
+    setFeedback(
+      dailyMessage,
+      taskTimeColumnsAvailable === false
+        ? "Task saved to the shared workspace without times. Apply the Supabase task time-column migration to save scheduled tasks."
+        : "Task saved to the shared workspace.",
+      taskTimeColumnsAvailable === false ? "error" : "success",
+    );
   } catch (loadError) {
     setFeedback(dailyMessage, authErrorMessage(loadError), "error");
   }
@@ -2767,6 +3139,7 @@ function clearSignedInData(): void {
   collaborationLoadSequence += 1;
   context = null;
   tasks = [];
+  dailyTodoItems = [];
   goals = [];
   cloudQuestions = [];
   cloudAnswers = [];
@@ -2783,9 +3156,11 @@ function clearSignedInData(): void {
   );
   goalDescriptions = {};
   dailyList.replaceChildren();
+  dailyTodoList.replaceChildren();
   weeklyUsers.replaceChildren();
   monthlyUsers.replaceChildren();
   setFeedback(dailyMessage, "", "info");
+  setFeedback(dailyTodoMessage, "", "info");
   setFeedback(weeklyMessage, "", "info");
   setFeedback(monthlyMessage, "", "info");
   setFeedback(workspaceSyncStatus, "", "info");
@@ -2937,39 +3312,8 @@ dailyForm.addEventListener(
   (event) => handleTaskSubmit(event as SubmitEvent),
   true,
 );
-inviteForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  void createWorkspaceInvitation();
-});
-replaceInvitationButton.addEventListener("click", () => {
-  if (context) {
-    const storedInvitation = readStoredInvitation(context);
-    if (storedInvitation) inviteEmail.value = storedInvitation.email;
-  }
-  inviteForm.hidden = false;
-  replaceInvitationButton.hidden = true;
-  setFeedback(
-    inviteMessage,
-    "Enter the same registered email to try again. Supabase will allow a replacement only when no active invitation exists; the client cannot check expiry.",
-    "info",
-  );
-});
-copyInvitationLinkButton.addEventListener("click", async () => {
-  try {
-    await navigator.clipboard.writeText(invitationLink.value);
-    setFeedback(
-      inviteMessage,
-      "Invitation link copied. Send it to your friend.",
-      "success",
-    );
-  } catch (error) {
-    console.error("Could not copy the StudySync invitation link:", error);
-    setFeedback(
-      inviteMessage,
-      "Could not copy automatically. Select the invitation link and copy it manually.",
-      "error",
-    );
-  }
+dailyTodoForm.addEventListener("submit", (event) => {
+  void submitDailyTodoItem(event);
 });
 dailyForm.addEventListener("submit", () => {
   if (workType.value !== "task") queueMicrotask(renderDailyWork);

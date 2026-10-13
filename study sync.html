@@ -1,4 +1,4 @@
-<!doctype html>
+np rctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -746,7 +746,10 @@
               </label>
               <label for="work-task-description">
                 Description (optional)
-                <textarea id="work-task-description" name="description"></textarea>
+                <textarea
+                  id="work-task-description"
+                  name="description"
+                ></textarea>
               </label>
             </div>
 
@@ -796,8 +799,17 @@
 
             <button type="submit">Save Daily Work</button>
           </form>
-          <p class="daily-work-message" id="daily-work-message" role="status" aria-live="polite"></p>
-          <div class="daily-work-list" id="daily-work-list" aria-live="polite"></div>
+          <p
+            class="daily-work-message"
+            id="daily-work-message"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <div
+            class="daily-work-list"
+            id="daily-work-list"
+            aria-live="polite"
+          ></div>
         </div>
 
         <div class="card">
@@ -812,7 +824,12 @@
             </label>
             <label for="weekly-goal-week">
               Week starting
-              <input id="weekly-goal-week" name="weekStart" type="date" required />
+              <input
+                id="weekly-goal-week"
+                name="weekStart"
+                type="date"
+                required
+              />
             </label>
             <label for="weekly-goal-title">
               Goal title
@@ -820,7 +837,10 @@
             </label>
             <label for="weekly-goal-description">
               Description (optional)
-              <textarea id="weekly-goal-description" name="description"></textarea>
+              <textarea
+                id="weekly-goal-description"
+                name="description"
+              ></textarea>
             </label>
             <button type="submit">Add weekly goal</button>
           </form>
@@ -845,11 +865,21 @@
             </label>
             <label for="monthly-goal-month">
               Month
-              <input id="monthly-goal-month" name="month" type="month" required />
+              <input
+                id="monthly-goal-month"
+                name="month"
+                type="month"
+                required
+              />
             </label>
             <label for="monthly-goal-title">
               Goal title
-              <input id="monthly-goal-title" name="title" type="text" required />
+              <input
+                id="monthly-goal-title"
+                name="title"
+                type="text"
+                required
+              />
             </label>
             <label for="monthly-goal-description">
               Description (optional)
@@ -960,7 +990,9 @@
                   <option value="monthly">Monthly Review</option>
                 </select>
               </label>
-              <button id="generate-review" type="button">Generate Review</button>
+              <button id="generate-review" type="button">
+                Generate Review
+              </button>
             </div>
             <div
               class="review-results"
@@ -968,11 +1000,7 @@
               aria-live="polite"
               hidden
             ></div>
-            <form
-              class="review-feedback-form"
-              id="review-feedback-form"
-              hidden
-            >
+            <form class="review-feedback-form" id="review-feedback-form" hidden>
               <label for="review-went-well">
                 What Went Well
                 <textarea id="review-went-well" name="wentWell"></textarea>
@@ -1236,11 +1264,13 @@
           }`;
 
           const heading = document.createElement("h4");
-          heading.textContent = `${{
-            task: "Task",
-            lecture: "Lecture",
-            problems: "Problems Solved",
-          }[entry.type]}: ${entry.type === "problems" ? entry.topic : entry.title}`;
+          heading.textContent = `${
+            {
+              task: "Task",
+              lecture: "Lecture",
+              problems: "Problems Solved",
+            }[entry.type]
+          }: ${entry.type === "problems" ? entry.topic : entry.title}`;
           card.append(heading);
           appendEntryText(card, `Assigned to ${entry.assignee}`);
 
@@ -1255,7 +1285,10 @@
           } else if (entry.type === "lecture") {
             appendEntryText(card, `Minutes completed: ${entry.minutes}`);
             if (entry.duration !== null) {
-              appendEntryText(card, `Total duration: ${entry.duration} minutes`);
+              appendEntryText(
+                card,
+                `Total duration: ${entry.duration} minutes`,
+              );
             }
           } else {
             appendEntryText(card, `Problems solved: ${entry.problems}`);
@@ -1423,13 +1456,13 @@
       function isValidWeeklyGoal(goal) {
         return Boolean(
           goal &&
-            typeof goal.id === "string" &&
-            (goal.assignee === "User 1" || goal.assignee === "User 2") &&
-            typeof goal.title === "string" &&
-            typeof goal.description === "string" &&
-            /^\d{4}-\d{2}-\d{2}$/.test(goal.weekStart) &&
-            !Number.isNaN(Date.parse(`${goal.weekStart}T00:00:00`)) &&
-            typeof goal.completed === "boolean",
+          typeof goal.id === "string" &&
+          (goal.assignee === "User 1" || goal.assignee === "User 2") &&
+          typeof goal.title === "string" &&
+          typeof goal.description === "string" &&
+          /^\d{4}-\d{2}-\d{2}$/.test(goal.weekStart) &&
+          !Number.isNaN(Date.parse(`${goal.weekStart}T00:00:00`)) &&
+          typeof goal.completed === "boolean",
         );
       }
 
@@ -1626,9 +1659,12 @@
 
       const monthlyGoalsStorageKey = "studysync-monthly-goals";
       const monthlyGoalForm = document.getElementById("monthly-goal-form");
-      const monthlyGoalMonthInput = document.getElementById("monthly-goal-month");
+      const monthlyGoalMonthInput =
+        document.getElementById("monthly-goal-month");
       const monthlyGoalUsers = document.getElementById("monthly-goal-users");
-      const monthlyGoalMessage = document.getElementById("monthly-goal-message");
+      const monthlyGoalMessage = document.getElementById(
+        "monthly-goal-message",
+      );
       let monthlyGoals = [];
       let monthlyGoalsStorageAvailable = true;
 
@@ -1639,13 +1675,13 @@
       function isValidMonthlyGoal(goal) {
         return Boolean(
           goal &&
-            typeof goal.id === "string" &&
-            (goal.assignee === "User 1" || goal.assignee === "User 2") &&
-            /^\d{4}-\d{2}$/.test(goal.month) &&
-            !Number.isNaN(Date.parse(`${goal.month}-01T00:00:00`)) &&
-            typeof goal.title === "string" &&
-            typeof goal.description === "string" &&
-            typeof goal.completed === "boolean",
+          typeof goal.id === "string" &&
+          (goal.assignee === "User 1" || goal.assignee === "User 2") &&
+          /^\d{4}-\d{2}$/.test(goal.month) &&
+          !Number.isNaN(Date.parse(`${goal.month}-01T00:00:00`)) &&
+          typeof goal.title === "string" &&
+          typeof goal.description === "string" &&
+          typeof goal.completed === "boolean",
         );
       }
 
@@ -1834,17 +1870,19 @@
       });
 
       const friendQuestionsStorageKey = "studysync-friend-questions";
-      const friendQuestionForm = document.getElementById("friend-question-form");
+      const friendQuestionForm = document.getElementById(
+        "friend-question-form",
+      );
       const friendQuestionCount = document.getElementById(
         "friend-question-count",
       );
       const friendQuestionFields = document.getElementById(
         "friend-question-fields",
       );
-      const friendQuestionList = document.getElementById("friend-question-list");
-      const friendPendingList = document.getElementById(
-        "friend-pending-list",
+      const friendQuestionList = document.getElementById(
+        "friend-question-list",
       );
+      const friendPendingList = document.getElementById("friend-pending-list");
       const friendCurrentUser = document.getElementById("friend-current-user");
       const friendQuestionCreateMessage = document.getElementById(
         "friend-question-create-message",
@@ -1866,19 +1904,18 @@
       function isValidFriendQuestion(question) {
         return Boolean(
           question &&
-            typeof question.id === "string" &&
-            (question.creator === "User 1" || question.creator === "User 2") &&
-            (question.assignee === "User 1" ||
-              question.assignee === "User 2") &&
-            question.creator !== question.assignee &&
-            typeof question.question === "string" &&
-            typeof question.hints === "string" &&
-            typeof question.expectedAnswer === "string" &&
-            typeof question.answer === "string" &&
-            typeof question.answered === "boolean" &&
-            typeof question.revealed === "boolean" &&
-            typeof question.date === "string" &&
-            !Number.isNaN(Date.parse(question.date)),
+          typeof question.id === "string" &&
+          (question.creator === "User 1" || question.creator === "User 2") &&
+          (question.assignee === "User 1" || question.assignee === "User 2") &&
+          question.creator !== question.assignee &&
+          typeof question.question === "string" &&
+          typeof question.hints === "string" &&
+          typeof question.expectedAnswer === "string" &&
+          typeof question.answer === "string" &&
+          typeof question.answered === "boolean" &&
+          typeof question.revealed === "boolean" &&
+          typeof question.date === "string" &&
+          !Number.isNaN(Date.parse(question.date)),
         );
       }
 
@@ -2060,9 +2097,7 @@
         }
 
         [...friendQuestions].reverse().forEach((question) => {
-          friendQuestionList.append(
-            createFriendQuestionCard(question, true),
-          );
+          friendQuestionList.append(createFriendQuestionCard(question, true));
         });
       }
 
@@ -2150,14 +2185,13 @@
       }
 
       friendQuestionCount.addEventListener("change", () => {
-        const drafts = [...friendQuestionFields.querySelectorAll(
-          ".friend-question-draft",
-        )].map((draft) => ({
+        const drafts = [
+          ...friendQuestionFields.querySelectorAll(".friend-question-draft"),
+        ].map((draft) => ({
           question: draft.querySelector('[name^="question-"]').value,
           hints: draft.querySelector('[name^="hints-"]').value,
-          expectedAnswer: draft.querySelector(
-            '[name^="expectedAnswer-"]',
-          ).value,
+          expectedAnswer: draft.querySelector('[name^="expectedAnswer-"]')
+            .value,
         }));
         renderQuestionDrafts(drafts);
       });
@@ -2183,9 +2217,7 @@
         const count = Number(formData.get("questionCount"));
 
         if (!Number.isInteger(count) || count < 1 || count > 4) {
-          showFriendQuestionCreateMessage(
-            "Select between 1 and 4 questions.",
-          );
+          showFriendQuestionCreateMessage("Select between 1 and 4 questions.");
           return;
         }
         if (
@@ -2206,9 +2238,7 @@
         for (let index = 0; index < count; index += 1) {
           const question = formData.get(`question-${index}`).trim();
           const hints = formData.get(`hints-${index}`).trim();
-          const expectedAnswer = formData
-            .get(`expectedAnswer-${index}`)
-            .trim();
+          const expectedAnswer = formData.get(`expectedAnswer-${index}`).trim();
           if (!question || !expectedAnswer) {
             showFriendQuestionCreateMessage(
               `Enter both the question and expected answer for Question ${index + 1}.`,
@@ -2277,30 +2307,27 @@
       function isValidSubmittedReview(review) {
         return Boolean(
           review &&
-            typeof review.id === "string" &&
-            (review.author === "User 1" || review.author === "User 2") &&
-            (review.recipient === "User 1" ||
-              review.recipient === "User 2") &&
-            review.author !== review.recipient &&
-            ["daily", "weekly", "monthly"].includes(review.period) &&
-            typeof review.periodLabel === "string" &&
-            typeof review.periodStart === "string" &&
-            /^\d{4}-\d{2}-\d{2}$/.test(review.periodStart) &&
-            typeof review.periodEnd === "string" &&
-            /^\d{4}-\d{2}-\d{2}$/.test(review.periodEnd) &&
-            ["wentWell", "improve", "advice", "targets"].every(
-              (field) => typeof review.feedback?.[field] === "string",
-            ) &&
-            typeof review.timestamp === "string" &&
-            !Number.isNaN(Date.parse(review.timestamp)),
+          typeof review.id === "string" &&
+          (review.author === "User 1" || review.author === "User 2") &&
+          (review.recipient === "User 1" || review.recipient === "User 2") &&
+          review.author !== review.recipient &&
+          ["daily", "weekly", "monthly"].includes(review.period) &&
+          typeof review.periodLabel === "string" &&
+          typeof review.periodStart === "string" &&
+          /^\d{4}-\d{2}-\d{2}$/.test(review.periodStart) &&
+          typeof review.periodEnd === "string" &&
+          /^\d{4}-\d{2}-\d{2}$/.test(review.periodEnd) &&
+          ["wentWell", "improve", "advice", "targets"].every(
+            (field) => typeof review.feedback?.[field] === "string",
+          ) &&
+          typeof review.timestamp === "string" &&
+          !Number.isNaN(Date.parse(review.timestamp)),
         );
       }
 
       function loadSubmittedReviews() {
         try {
-          const savedReviews = localStorage.getItem(
-            submittedReviewsStorageKey,
-          );
+          const savedReviews = localStorage.getItem(submittedReviewsStorageKey);
           if (savedReviews === null) {
             return [];
           }
@@ -2431,9 +2458,7 @@
 
       function isWithinReviewRange(value, start, end) {
         const date = new Date(value);
-        return (
-          !Number.isNaN(date.getTime()) && date >= start && date < end
-        );
+        return !Number.isNaN(date.getTime()) && date >= start && date < end;
       }
 
       function formatReviewDate(date) {
@@ -2472,7 +2497,11 @@
             ? `Today, ${formatReviewDate(start)}`
             : period === "weekly"
               ? `Week of ${formatReviewDate(start)} – ${formatReviewDate(
-                  new Date(end.getFullYear(), end.getMonth(), end.getDate() - 1),
+                  new Date(
+                    end.getFullYear(),
+                    end.getMonth(),
+                    end.getDate() - 1,
+                  ),
                 )}`
               : start.toLocaleDateString("en-IN", {
                   month: "long",
@@ -2582,9 +2611,7 @@
             tasks.length
               ? [
                   ...completedTasks.map((task) => `Complete: ${task.title}`),
-                  ...incompleteTasks.map(
-                    (task) => `Incomplete: ${task.title}`,
-                  ),
+                  ...incompleteTasks.map((task) => `Incomplete: ${task.title}`),
                 ]
               : ["No task entries were recorded during this review period."],
           ),
@@ -2652,7 +2679,9 @@
                   `${pendingQuestions.length} pending`,
                   "Questions are grouped by their creation date because answer dates are not stored.",
                 ]
-              : ["No questions assigned to this user were created in this period."],
+              : [
+                  "No questions assigned to this user were created in this period.",
+                ],
           ),
         );
         reviewResults.append(summaryGrid);
