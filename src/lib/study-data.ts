@@ -1378,8 +1378,17 @@ async function confirmWorkspaceSelection(
     }
 
     saveWorkspaceSelection(session.user.id, workspaceId);
-    document.getElementById("workspace-selection")?.remove();
-    void initializeForSession(session, workspaceId);
+    await initializeForSession(session, workspaceId);
+    if (context?.workspace.id === workspaceId) {
+      document.getElementById("workspace-selection")?.remove();
+    } else {
+      if (submitButton) submitButton.disabled = false;
+      setFeedback(
+        feedback,
+        "The selected workspace could not be initialized. Review the workspace status and try again.",
+        "error",
+      );
+    }
   } catch (error) {
     console.error("Could not verify the selected StudySync workspace:", error);
     setFeedback(
@@ -3182,8 +3191,18 @@ async function initializeForSession(
     clearSignedInData();
     return;
   }
-  if (currentSessionUserId === session.user.id && context) return;
-  if (initializingUserId === session.user.id && initializationPromise) {
+  if (
+    currentSessionUserId === session.user.id &&
+    context &&
+    (!selectedWorkspaceId || context.workspace.id === selectedWorkspaceId)
+  ) {
+    return;
+  }
+  if (
+    !selectedWorkspaceId &&
+    initializingUserId === session.user.id &&
+    initializationPromise
+  ) {
     return initializationPromise;
   }
 
@@ -3241,7 +3260,6 @@ async function initializeForSession(
         !acceptedWorkspaceId && !selectedWorkspaceId,
       );
       if (sequence !== requestSequence) return;
-      document.getElementById("workspace-selection")?.remove();
       context = workspaceContext;
       updateInvitationControls(workspaceContext);
       syncCollaborationControls(workspaceContext);
@@ -3250,6 +3268,7 @@ async function initializeForSession(
       syncAssigneeOptions(monthlyAssignee, true);
       startWorkspaceSync(workspaceContext.workspace.id);
       await loadRecords();
+      document.getElementById("workspace-selection")?.remove();
       try {
         await loadCollaborativeRecords(workspaceContext);
       } catch (collaborationError) {
@@ -3275,6 +3294,8 @@ async function initializeForSession(
       }
     } catch (error) {
       if (sequence !== requestSequence) return;
+      context = null;
+      stopWorkspaceSync();
       if (error instanceof WorkspaceSelectionRequiredError) {
         const message = "Select a confirmed workspace to load your study data.";
         setFeedback(dailyMessage, message, "info");
